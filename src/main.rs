@@ -8,25 +8,27 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 
-use rayon::prelude::*;
-
-//mod linalg;
-mod scene;
+mod geometry;
 mod tracer;
 
 
+///
+/// Program options
 struct ProgramOptions {
     resolution: usize,
     max_bounces: usize,
     num_samples: usize,
     scene_file: std::path::PathBuf,
+    camera_file: std::path::PathBuf,
     image_file: std::path::PathBuf
 }
 
 
 
+///
+/// Parse the command line arguments
 fn parse_options() -> ProgramOptions {
-    // Parse the command line arguments
+    // Argument definition
     let matches = clap::App::new("Rusty Ray")
                           .version("0.1")
                           .author("José Franco Campos <josefrancocampos@gmail.com>")
@@ -56,6 +58,13 @@ fn parse_options() -> ProgramOptions {
                                .help("Path to the scene definition file")
                                .takes_value(true)
                                .required(true))
+                          .arg(clap::Arg::with_name("camera")
+                               .short("c")
+                               .long("input")
+                               .value_name("FILE")
+                               .help("Path to the camera definition file")
+                               .takes_value(true)
+                               .required(true))
                           .arg(clap::Arg::with_name("output")
                                .short("o")
                                .long("output")
@@ -71,24 +80,28 @@ fn parse_options() -> ProgramOptions {
         num_samples: matches.value_of("num_samples").unwrap_or("10").parse::<usize>().unwrap(),
         max_bounces: matches.value_of("max_bounces").unwrap_or("4").parse::<usize>().unwrap(),
         scene_file: std::path::PathBuf::from(matches.value_of("input").unwrap_or("").to_string()),
+        camera_file: std::path::PathBuf::from(matches.value_of("camera").unwrap_or("").to_string()),
         image_file: std::path::PathBuf::from(matches.value_of("output").unwrap_or("").to_string())
     }
 }
 
 
+
+///
+/// 
 fn main() {
     // Load the input data
     let options = parse_options();
-    let scene = scene::load(&options.scene_file).unwrap();
-    let camera = tracer::Camera::new(&scene, options.resolution);
-    let geometry = tracer::build_geometry(&scene);
+    let scene = tracer::Scene::from_json(&options.scene_file).unwrap();
+    let camera = tracer::Camera::from_json(&options.camera_file, options.resolution).unwrap();
 
     // Render the scene
-    let mut fb = tracer::create_image(options.resolution, options.resolution);
+    let mut fb = tracer::Image::new(options.resolution, options.resolution);
     for i in 0..options.num_samples {
         println!("Rendering sample {}/{}", i, options.num_samples);
-        let rays = camera.make_rays();
-        let sampling = rays.par_iter().map(|&r| tracer::sample(&geometry, r, options.max_bounces)).collect();
+        //let rays = camera.make_rays();
+        //let sampling = rays.par_iter().map(|&r| tracer::sample(&scene, r, options.max_bounces)).collect();
+        let sampling = tracer::sample(&scene, &camera, options.max_bounces);
         fb.accum(&sampling);
     }
     

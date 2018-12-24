@@ -1,9 +1,22 @@
+use nalgebra;
+
+use serde_json;
+
+use std;
+use std::f32;
+use std::collections::HashMap;
+use std::fs::File;
+use std::path::Path;
+use std::ops::Deref;
+
+
+
 // --------------------------------------------------------------------------------------------------------------------------------------------------
-// Data types
+// Public data types
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
-#[derive(Clone, Copy)]
-pub struct Ray {
-    pub origin: nalgebra::Vector4<f32>,
-    pub direction: nalgebra::Vector4<f32>
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Material {
+    pub diffuse: super::Color,
+    pub emission: super::Color
 }

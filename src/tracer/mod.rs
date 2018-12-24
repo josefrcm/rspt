@@ -1,17 +1,17 @@
 pub mod camera;
 pub use self::camera::*;
 
-pub mod geometry;
-pub use self::geometry::*;
+pub mod color;
+pub use self::color::*;
 
 pub mod image;
 pub use self::image::*;
 
-pub mod color;
-pub use self::color::*;
+pub mod material;
+pub use self::material::*;
 
 pub mod sampling;
 pub use self::sampling::*;
 
-pub use self::ray::*;
-pub mod ray;
+pub mod scene;
+pub use self::scene::*;

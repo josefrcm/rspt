@@ -1,8 +1,4 @@
 {
-    "camera": {
-        "position": [0.0, -3.0, 1.7, 1.0],
-        "orientation": [1.0, 0.0, 0.0, 0.0]
-    },
     "materials": {
         "white-light": {
             "diffuse": {
@@ -41,14 +37,9 @@
             }
         }
     },
-    "meshes": {
-        "ceiling": "models/ceiling.ply",
-        "floor": "models/floor.ply",
-        "monkey": "models/suzanne.ply"
-    },
-    "instances": [
-        {"mesh": "ceiling", "material": "white-light"},
-        {"mesh": "floor", "material": "white-diffuse"},
-        {"mesh": "monkey", "material": "red-diffuse"}
+    "meshes": [
+        {"mesh": "models/ceiling.ply", "material": "white-light"},
+        {"mesh": "models/floor.ply", "material": "white-diffuse"},
+        {"mesh": "models/suzanne.ply", "material": "red-diffuse"}
     ]
 }

@@ -4,29 +4,36 @@ use std::io::prelude::*;
 use std::f32;
 //use std::io::BufWriter;
 
-use scene::Color;
 
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+// Public data types
+// --------------------------------------------------------------------------------------------------------------------------------------------------
 
 pub struct Image {
     width: usize,
     height: usize,
-    pixels: Vec<Color>
+    pixels: Vec<super::Color>
 }
 
 
 
-pub fn create_image(width : usize, height : usize) -> Image {
-    Image {
-        width: width,
-        height: height,
-        pixels: vec![super::BLACK; width*height]
-    }
-}
-
-
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+// Public functions
+// --------------------------------------------------------------------------------------------------------------------------------------------------
 
 impl Image {
-    pub fn accum(&mut self, other: &Vec<Color>) {
+    pub fn new(width : usize, height : usize) -> Self {
+        Image {
+            width: width,
+            height: height,
+            pixels: vec![super::BLACK; width*height]
+        }
+    }
+
+
+
+    pub fn accum(&mut self, other: &Vec<super::Color>) {
         assert!((self.width*self.height) == other.len());
         for i in 0..(self.width*self.height) {
             self.pixels[i].r += other[i].r;
@@ -89,6 +96,7 @@ impl Image {
         header[17] = 0;                                   // Coordinate origin on the upper-left corner
 
         // Create the image body
+        // Note: TGA files are written upside down
         let mut body : Vec<u8> = Vec::with_capacity(self.width*self.height*3);
         for y in (0..self.height).rev() {
             for x in 0..self.width {

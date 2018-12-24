@@ -1,14 +1,31 @@
-use scene;
-
-use std::f32;
+use geometry;
 use rand; //::{Rng, thread_rng};
 
+use serde_json;
+
+use std;
+use std::f32;
+use std::fs::File;
+use std::path::Path;
+
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
-// Data types
+// Public data types
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
+///
+/// Camera definition
+#[derive(Clone, Serialize, Deserialize)]
+struct CameraDef {
+    pub position: nalgebra::Vector4<f32>,
+    pub orientation: nalgebra::UnitQuaternion<f32>
+}
+
+
+
+///
+/// Camera
 pub struct Camera {
     pub position: nalgebra::Vector4<f32>,
     pub orientation: nalgebra::UnitQuaternion<f32>,
@@ -18,20 +35,32 @@ pub struct Camera {
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
-// Functions
+// Public functions
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 impl Camera {
-    pub fn new(scene: &scene::Scene, resolution: usize) -> Camera {
-        Camera {
-            position: scene.camera.position,
-            orientation: scene.camera.orientation,
+    ///
+    /// Load the camera description from a JSON file
+    pub fn from_json(filename: &Path, resolution: usize) -> Result<Camera, std::io::Error> {
+        // Load the camera description from the JSON file
+        let file = File::open(filename)?;
+        let json : CameraDef = serde_json::from_reader(file)?;
+
+        // Build the camera
+        Ok(Camera {
+            position: json.position,
+            orientation: json.orientation,
             resolution: resolution
-        }
+        })
     }
 
-    pub fn make_rays(&self) -> Vec<super::Ray> {
-        let mut rays: Vec<super::Ray> = Vec::new();
+
+
+    ///
+    /// Trace rays from the camera
+    /// TODO: add 
+    pub fn make_rays(&self) -> Vec<geometry::Ray> {
+        let mut rays: Vec<geometry::Ray> = Vec::new();
         let xbias = rand::random::<f32>();
         let ybias = rand::random::<f32>();
         for y in 0..self.resolution {
@@ -39,7 +68,7 @@ impl Camera {
                 let xr = 2.0*(x as f32 + xbias)/(self.resolution as f32) - 1.0;
                 let yr = -2.0*(y as f32 + ybias)/(self.resolution as f32) + 1.0;
                 let direction = nalgebra::Vector4::new(xr, 1.0, yr, 0.0).normalize();
-                rays.push(super::Ray {
+                rays.push(geometry::Ray {
                     origin: self.position,
                     direction: direction
                 });

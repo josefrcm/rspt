@@ -1,23 +1,25 @@
 use std::f32;
 use rand; //::{Rng, thread_rng};
-use scene;
+use geometry;
+
+
+use rayon::prelude::*;
+//use rayon::iter::IntoParallelRefIterator;
 
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
-// Data types
+// Public data types
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
-
-
-pub struct Sampler {
+pub struct Sampler2D {
     rng : rand::ThreadRng
 }
 
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
-// Functions
+// Public functions
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 pub fn sample_hemisphere(normal: nalgebra::Vector4<f32>, incident: nalgebra::Vector4<f32>) -> nalgebra::Vector4<f32> {
@@ -67,7 +69,8 @@ pub fn sample_hemisphere(normal: nalgebra::Vector4<f32>, incident: nalgebra::Vec
 }
 
 
-pub fn sample(geometry: &super::Geometry, ray: super::Ray, max_iter : usize) -> scene::Color {
+
+pub fn sample_scene(geometry: &super::Scene, ray: geometry::Ray, max_iter : usize) -> super::Color {
     if max_iter == 0 {
         super::BLACK
     } else {
@@ -75,16 +78,26 @@ pub fn sample(geometry: &super::Geometry, ray: super::Ray, max_iter : usize) -> 
         
         match hit {
             None => super::BLACK,
+            //None => super::WHITE,
             // Recursive tracing
             Some(intersection) => {
                 let s = sample_hemisphere(intersection.normal, ray.direction);
-                let r = super::Ray {
+                let r = geometry::Ray {
                     origin: intersection.point + 1.0e-3 * s,
                     direction: s
                 };
-                let d = sample(geometry, r, max_iter-1);
+                let d = sample_scene(geometry, r, max_iter-1);
                 intersection.material.emission + intersection.normal.dot(&r.direction) * intersection.material.diffuse * d
             }
         }
     }
+}
+
+
+
+pub fn sample(scene: &super::Scene, camera: &super::Camera, max_bounces: usize) -> Vec<super::Color>
+{
+    let rays = camera.make_rays();
+    let sampling = rays.par_iter().map(|&r| sample_scene(&scene, r, max_bounces)).collect();
+    sampling
 }
