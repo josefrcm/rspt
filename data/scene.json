@@ -1,0 +1,54 @@
+{
+    "camera": {
+        "position": [0.0, -3.0, 1.7, 1.0],
+        "orientation": [1.0, 0.0, 0.0, 0.0]
+    },
+    "materials": {
+        "white-light": {
+            "diffuse": {
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0
+            },
+            "emission": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0
+            }
+        },
+        "white-diffuse": {
+            "diffuse": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0
+            },
+            "emission": {
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0
+            }
+        },
+        "red-diffuse": {
+            "diffuse": {
+                "r": 1.0,
+                "g": 0.0,
+                "b": 0.0
+            },
+            "emission": {
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0
+            }
+        }
+    },
+    "meshes": {
+        "ceiling": "models/ceiling.ply",
+        "floor": "models/floor.ply",
+        "monkey": "models/suzanne.ply"
+    },
+    "instances": [
+        {"mesh": "ceiling", "material": "white-light"},
+        {"mesh": "floor", "material": "white-diffuse"},
+        {"mesh": "monkey", "material": "red-diffuse"}
+    ]
+}
