@@ -8,6 +8,7 @@ use std::f32;
 
 ///
 /// Axis aligned bounding box
+#[derive(Clone, Copy)]
 pub struct BoundingBox {
     pub lower: nalgebra::Vector3<f32>,
     pub upper: nalgebra::Vector3<f32>

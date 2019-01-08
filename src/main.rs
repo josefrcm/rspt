@@ -130,7 +130,6 @@ fn main() {
     let save_time = save_start.elapsed();
 
     // Print the timing results
-    let end = std::time::Instant::now();
     println!("Timing results:");
     println!("\tLoading ->   {}", pretty_time(load_time));
     println!("\tRendering -> {}", pretty_time(render_time));

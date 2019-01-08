@@ -71,11 +71,14 @@ impl TriangleBundle {
 
         bundle
     }
+}
 
 
+
+impl super::Intersectable for TriangleBundle {
     ///
     /// Ray-Bundle intersection
-    pub fn intersect(&self, ray: super::Ray) -> Option<super::Intersection> {
+    fn intersect(&self, ray: super::Ray) -> Option<super::Intersection> {
         // Find the intersection of the ray against the bundle
         let mut nearest_face: usize = 0;
         let mut nearest_hit = TriangleIntersection {
@@ -109,11 +112,14 @@ impl TriangleBundle {
                 v1: self.faces[nearest_face].v1,
                 v2: self.faces[nearest_face].v2,
                 v3: self.faces[nearest_face].v3,
-                material: self.faces[nearest_face].material
+                material: self.faces[nearest_face].material,
+                point: nalgebra::zero(),
+                normal: nalgebra::zero(),
             })
         }
     }
 }
+
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------

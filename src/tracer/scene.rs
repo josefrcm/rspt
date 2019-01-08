@@ -10,6 +10,7 @@ use std::path::Path;
 use std::ops::Deref;
 
 use geometry;
+use geometry::util::Intersectable;
 
 
 
@@ -36,7 +37,7 @@ pub struct SceneDef {
 /// World geometry
 pub struct Scene {    
     pub materials: Vec<super::Material>,
-    pub meshes: Vec<geometry::Mesh>
+    pub geometry: geometry::BVH<geometry::Mesh>
 }
 
 
@@ -76,10 +77,18 @@ impl Scene {
             meshes.push(mesh);
         }
 
+        // Build the acceleration structure        
+        let mut bundles = Vec::new();
+        for m in meshes {
+            let b = m.bounds();
+            bundles.push((m, b));
+        }
+        let tree = geometry::BVH::build(bundles);
+
         // Done
         Ok(Scene {
             materials: materials,
-            meshes: meshes
+            geometry: tree
         })
     }
 
@@ -87,37 +96,14 @@ impl Scene {
     ///
     /// Intersect a ray against the world
     pub fn intersect(&self, ray: geometry::Ray) -> Option<SceneIntersection> {
-        /*let segment = geometry::Segment {
-            origin: ray.origin,
-            direction: ray.direction,
-            start: 0.0,
-            finish: f32::INFINITY
-        };*/
-
-        let mut min_dist = f32::INFINITY;
-        let mut best_hit = None;
-        for m in self.meshes.iter() {
-            match m.intersect(ray) {
-                // If a triangle was hit, compute the intersection parameters: coordinates, normal, material, etc.
-
-                Some(intersection) => {
-                    if intersection.distance < min_dist {
-                        min_dist = intersection.distance;
-                        best_hit = Some(intersection);
-                    }
-                },
-                None => {}
-            }
-        }
-
-        match best_hit {
+        match self.geometry.intersect(ray) {
+            None => None,
             Some(hit) => Some(SceneIntersection {
-                    point: hit.point,
-                    normal: hit.normal,
-                    distance: hit.distance,
-                    material: &self.materials[hit.material as usize]
-                }),
-            None => None
+                point: hit.point,
+                normal: hit.normal,
+                distance: hit.distance,
+                material: &self.materials[hit.material as usize]
+            })
         }
     }
 }

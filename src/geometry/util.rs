@@ -48,7 +48,7 @@ pub struct Segment {
 
 
 ///
-/// Intersection against the tree
+/// Result of a mesh/world-ray intersection
 pub struct Intersection {
     pub distance: f32,
     pub alpha: f32,
@@ -57,5 +57,40 @@ pub struct Intersection {
     pub v1: u32,
     pub v2: u32,
     pub v3: u32,
-    pub material: u32
+    pub material: u32,
+    pub point: nalgebra::Vector4<f32>,
+    pub normal: nalgebra::Vector4<f32>
+}
+
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+// Public traits
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+pub trait Intersectable {
+    fn intersect(&self, ray: Ray) -> Option<Intersection>;
+}
+
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+// Public methods
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+impl Intersection {
+    pub fn empty() -> Self {
+        Intersection {
+            distance: std::f32::INFINITY,
+            alpha: 0.0,
+            beta: 0.0,
+            gamma: 0.0,
+            v1: 0,
+            v2: 0,
+            v3: 0,
+            material: 0,
+            point: nalgebra::zero(),
+            normal: nalgebra::zero()
+        }
+    }     
 }
