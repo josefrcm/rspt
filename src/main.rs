@@ -88,26 +88,50 @@ fn parse_options() -> ProgramOptions {
 
 
 ///
+/// Pretty print a duration
+pub fn pretty_time(t: std::time::Duration) -> String {
+     let nanos = t.subsec_nanos();
+     let mut seconds = t.as_secs();
+     let mut minutes = seconds / 60;
+     seconds = seconds % 60;
+     let hours = minutes / 60;
+     minutes = minutes % 60;
+     format!("{}:{:02}:{:02}.{}", hours, minutes, seconds, nanos)
+}
+
+
+
+///
 /// 
 fn main() {
     // Load the input data
+    let load_start = std::time::Instant::now();
     let options = parse_options();
     let scene = tracer::Scene::from_json(&options.scene_file).unwrap();
     let camera = tracer::Camera::from_json(&options.camera_file, options.resolution).unwrap();
+    let load_time = load_start.elapsed();
 
     // Render the scene
+    let render_start = std::time::Instant::now();
     let mut fb = tracer::Image::new(options.resolution, options.resolution);
     for i in 0..options.num_samples {
-        println!("Rendering sample {}/{}", i, options.num_samples);
-        //let rays = camera.make_rays();
-        //let sampling = rays.par_iter().map(|&r| tracer::sample(&scene, r, options.max_bounces)).collect();
+        println!("Rendering sample {}/{}", i+1, options.num_samples);
         let sampling = tracer::sample(&scene, &camera, options.max_bounces);
         fb.accum(&sampling);
     }
+    let render_time = render_start.elapsed();
     
     // Write the resulting image
+    let save_start = std::time::Instant::now();
     println!("Writing result");
     fb.normalize();
     fb.save_tga(&options.image_file);
-    println!("Done");
+    let save_time = save_start.elapsed();
+
+    // Print the timing results
+    let end = std::time::Instant::now();
+    println!("Timing results:");
+    println!("\tLoading ->   {}", pretty_time(load_time));
+    println!("\tRendering -> {}", pretty_time(render_time));
+    println!("\tSaving ->    {}", pretty_time(save_time));
 }

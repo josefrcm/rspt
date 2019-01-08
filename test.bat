@@ -1,4 +1,4 @@
 set RUST_BACKTRACE=1
 cargo build --release
-del render.tga
-target\release\rusty_ray -s 10 -i data\scene.json -c data\camera.json -o target\release\render.tga
+del target\release\render.tga
+target\release\rusty_ray -s 100 -i data\scene.json -c data\camera.json -o target\release\render.tga
