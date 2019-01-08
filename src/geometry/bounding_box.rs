@@ -114,3 +114,9 @@ impl super::BoundingBox {
         }
     }
 }
+
+
+
+pub trait Boundable {
+    fn bounds(&self) -> BoundingBox;
+}

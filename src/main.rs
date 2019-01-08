@@ -1,4 +1,5 @@
 extern crate clap;
+extern crate image;
 extern crate rand;
 extern crate rayon;
 extern crate nalgebra;
@@ -119,13 +120,13 @@ fn main() {
         let sampling = tracer::sample(&scene, &camera, options.max_bounces);
         fb.accum(&sampling);
     }
+    fb.scale(options.num_samples);
     let render_time = render_start.elapsed();
     
     // Write the resulting image
     let save_start = std::time::Instant::now();
     println!("Writing result");
-    fb.normalize();
-    fb.save_tga(&options.image_file);
+    fb.save_png(&options.image_file);
     let save_time = save_start.elapsed();
 
     // Print the timing results
