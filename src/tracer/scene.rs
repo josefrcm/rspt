@@ -67,6 +67,8 @@ impl Scene {
         // Load each model
         let base_dir = filename.parent().unwrap();
         let mut materials = Vec::new();
+        materials.push(super::Material::none());
+
         let mut meshes = Vec::new();
         for m in &json.meshes {
             let material_num = materials.len();

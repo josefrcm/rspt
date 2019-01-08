@@ -45,11 +45,27 @@ pub struct Mesh {
 // Public functions
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
-const BUNDLE_SIZE : usize = 10;
-
-
-
 impl Mesh {
+    ///
+    /// Create a new mesh from an array of vertices and an array of triangles
+    pub fn new(vertices: Vec<super::Vertex>, faces: Vec<super::Triangle>) -> Self {
+        // Build the acceleration structure
+        let mut bundles = Vec::new();
+        for c in faces.chunks(super::BUNDLE_SIZE) {
+            let foo = super::TriangleBundle::build(&vertices, &c.to_vec());
+            let bar = super::BoundingBox::build2(&vertices, &c.to_vec());
+            bundles.push((foo, bar));
+        }
+        let tree = super::BVH::build(bundles);
+
+        // Done
+        Mesh {
+            vertices: vertices,
+            faces: tree
+        }
+    }
+
+
     ///
     /// Load a mesh from a PLY file
     pub fn load_ply(filename: &Path, material: u32) -> Result<Self, std::io::Error> {
@@ -125,20 +141,7 @@ impl Mesh {
         }        
 
         // Build the acceleration structure
-        let mut bundles = Vec::new();
-        for c in faces.chunks(BUNDLE_SIZE) {
-            let foo = super::TriangleBundle::build(&vertices, &c.to_vec());
-            let bar = super::BoundingBox::build2(&vertices, &c.to_vec());
-            bundles.push((foo, bar));
-        }
-        let tree = super::BVH::build(bundles);
-
-        // Done
-        Ok(Mesh {
-            vertices: vertices,
-            faces: tree
-        })
-        
+        Ok(Self::new(vertices, faces))
     }
 
 
