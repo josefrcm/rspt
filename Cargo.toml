@@ -1,5 +1,5 @@
 [package]
-name = "rusty_ray"
+name = "rspt"
 version = "0.1.0"
 authors = ["José Franco Campos <josefrancocampos@gmail.com>"]
 
