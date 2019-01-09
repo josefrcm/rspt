@@ -2,18 +2,22 @@
 // Public data types
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
+const NODE_SIZE : usize = 4;
+
+#[derive(Clone)]
 pub enum Node<T> {
     Empty,
     Leaf(T),
-    Branch(BVH<T>)
+    Branch(Box<BVH<T>>)
 }
 
 
 ///
 /// Recursive bounding volume hierarchy
+#[derive(Clone)]
 pub struct BVH<T> {
-    bounds: Vec<super::BoundingBox>,
-    children: Vec<Node<T>>
+    bounds: [super::BoundingBox; NODE_SIZE],
+    children: [Node<T>; NODE_SIZE]
 }
 
 
@@ -24,27 +28,79 @@ pub struct BVH<T> {
 
 ///
 /// Build the whole world geometry
-impl<T> BVH<T> {
+impl<T: Clone> BVH<T> {
+    ///
+    /// An empty tree
+    pub fn empty() -> Self {
+        BVH {
+            bounds: [super::BoundingBox::empty(); NODE_SIZE],
+            children: [Node::Empty, Node::Empty, Node::Empty, Node::Empty]
+        }
+    }
+
+
     ///
     /// Constructor
-    pub fn build(elements: Vec<(T, super::BoundingBox)>) -> Self {
-        const NODE_SIZE : usize = 4;
+    pub fn build(elements: &[(T, super::BoundingBox)]) -> Self {
+        let leaves = Self::build_leaves(elements);
+        Self::build_branches(&leaves)
+    }
 
-        // Bottom-up building
-        //let bounds = faces.chunks(BUNDLE_SIZE).map(|f| super::BoundingBox::build2(&vertices, &f.to_vec())).collect();
-        //let leaves = faces.chunks(BUNDLE_SIZE).map(|f| super::TriangleBundle::build(&vertices, &f.to_vec())).map(|x| BVH::Leaf(x)).collect();
-        //BVH::Node(bounds, leaves)
 
-        let mut bounds = Vec::new();
-        let mut children = Vec::new();
-        for (elem, bbox) in elements {
-            bounds.push(bbox);
-            children.push(Node::Leaf(elem));
+    ///
+    /// First stage: turn the leaves into nodes
+    fn build_leaves(elements: &[(T, super::BoundingBox)]) -> Vec<Box<BVH<T>>> {
+        let mut leaves = Vec::new();
+        for c in elements.chunks(NODE_SIZE) {
+            let mut new_node = Self::empty();
+            let mut i = 0;
+            for e in c {
+                new_node.children[i] = Node::Leaf(e.0.clone());
+                new_node.bounds[i] = e.1;
+                i = i+1;
+            }
+            leaves.push(Box::new(new_node));
         }
-        BVH {
-            bounds: bounds,
-            children: children
+
+        /*for c in elements.chunks(NODE_SIZE) {
+            let mut new_node = Self::empty();
+            let mut i = 0;
+            for e in c {
+                new_node.children[i] = Node::Leaf(e.0);
+                new_node.bounds[i] = e.1;
+                i = i+1;
+            }
+            leaves.push(Box::new(new_node));
+        }*/
+
+        leaves
+    }
+
+
+    ///
+    /// Second stage: recursively merge the nodes into bigger nodes
+    fn build_branches(elements: &[Box<BVH<T>>]) -> Self {
+        // First case: an empty tree
+        if elements.len() == 0 {
+            Self::empty()
         }
+        // Second case: a tree with just one leaf
+        else if elements.len() == 1 {
+            (*elements[0]).clone()
+        }
+        // Third case: merge the leaves into groups of NODE_SIZE elements
+        else {
+            let mut leaves = Vec::new();
+            for c in elements.chunks(NODE_SIZE) {
+                let mut node = Self::empty();
+                for i in 0..c.len() {                
+                    node.children[i] = Node::Branch(c[i].clone());
+                    node.bounds[i] = c[i].bounds[0].merge(&c[i].bounds[1]).merge(&c[i].bounds[2]).merge(&c[i].bounds[3]);
+                }
+                leaves.push(Box::new(node));
+            }
+            Self::build_branches(&leaves)
+        }        
     }
 }
 

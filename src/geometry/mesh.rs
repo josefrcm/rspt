@@ -15,6 +15,7 @@ use geometry::util::Intersectable;
 
 ///
 /// Vertex
+#[derive(Clone)]
 pub struct Vertex {
     pub coords: nalgebra::Vector4<f32>,
     pub normal: nalgebra::Vector4<f32>
@@ -34,6 +35,7 @@ pub struct Triangle {
 
 ///
 /// Polygon mesh
+#[derive(Clone)]
 pub struct Mesh {
     pub vertices: Vec<Vertex>,
     pub faces: super::BVH<super::TriangleBundle>
@@ -56,7 +58,7 @@ impl Mesh {
             let bar = super::BoundingBox::build2(&vertices, &c.to_vec());
             bundles.push((foo, bar));
         }
-        let tree = super::BVH::build(bundles);
+        let tree = super::BVH::build(&bundles);
 
         // Done
         Mesh {

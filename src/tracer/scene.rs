@@ -85,7 +85,7 @@ impl Scene {
             let b = m.bounds();
             bundles.push((m, b));
         }
-        let tree = geometry::BVH::build(bundles);
+        let tree = geometry::BVH::build(&bundles);
 
         // Done
         Ok(Scene {

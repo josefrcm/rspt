@@ -13,6 +13,7 @@ type f32xN = VectorN<f32, U8>;
 
 ///
 /// Triangle bundle
+#[derive(Clone, Copy)]
 pub struct TriangleBundle {
     v1: [u32; BUNDLE_SIZE],
     v2: [u32; BUNDLE_SIZE],

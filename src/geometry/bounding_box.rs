@@ -23,6 +23,22 @@ pub struct BoundingBox {
 ///
 /// Compute the bounding box
 impl super::BoundingBox {
+    pub fn zero() -> Self {
+        BoundingBox {
+            lower: nalgebra::zero(),
+            upper: nalgebra::zero()
+        }
+    }
+
+
+    pub fn empty() -> Self {
+        BoundingBox {
+            lower: nalgebra::Vector3::new(f32::NAN, f32::NAN, f32::NAN),
+            upper: nalgebra::Vector3::new(f32::NAN, f32::NAN, f32::NAN)
+        }
+    }
+
+
     pub fn build(vertices: &Vec<super::Vertex>) -> Self {
         // Initialization
         let mut lower = nalgebra::Vector3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
@@ -112,6 +128,22 @@ impl super::BoundingBox {
             super::Interval::new(foo, bar)
         } else {
             super::Interval::new(f32::INFINITY, f32::INFINITY)
+        }
+    }
+
+
+    pub fn merge(&self, rhs: &BoundingBox) -> Self {
+        BoundingBox {
+            lower: nalgebra::Vector3::new(
+                f32::min(self.lower.x, rhs.lower.x),
+                f32::min(self.lower.y, rhs.lower.y),
+                f32::min(self.lower.z, rhs.lower.z)
+            ),
+            upper: nalgebra::Vector3::new(
+                f32::max(self.upper.x, rhs.upper.x),
+                f32::max(self.upper.y, rhs.upper.y),
+                f32::max(self.upper.z, rhs.upper.z)
+            )
         }
     }
 }
