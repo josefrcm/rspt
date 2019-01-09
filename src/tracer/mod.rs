@@ -4,6 +4,9 @@ pub use self::camera::*;
 pub mod color;
 pub use self::color::*;
 
+pub mod halton;
+pub use self::halton::*;
+
 pub mod image;
 pub use self::image::*;
 

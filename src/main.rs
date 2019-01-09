@@ -109,7 +109,7 @@ fn main() {
     let load_start = std::time::Instant::now();
     let options = parse_options();
     let scene = tracer::Scene::from_json(&options.scene_file).unwrap();
-    let camera = tracer::Camera::from_json(&options.camera_file, options.resolution).unwrap();
+    let mut camera = tracer::Camera::from_json(&options.camera_file, options.resolution).unwrap();
     let load_time = load_start.elapsed();
 
     // Render the scene
@@ -117,7 +117,7 @@ fn main() {
     let mut fb = tracer::Image::new(options.resolution, options.resolution);
     for i in 0..options.num_samples {
         println!("Rendering sample {}/{}", i+1, options.num_samples);
-        let sampling = tracer::sample(&scene, &camera, options.max_bounces);
+        let sampling = tracer::sample(&scene, &mut camera, options.max_bounces);
         fb.accum(&sampling);
     }
     fb.scale(options.num_samples);
