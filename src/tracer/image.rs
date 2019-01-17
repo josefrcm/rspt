@@ -1,6 +1,10 @@
 use std::io;
 use std::f32;
 
+use image;
+
+use tracer::*;
+
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -10,7 +14,7 @@ use std::f32;
 pub struct Image {
     width: usize,
     height: usize,
-    pixels: Vec<super::Color>
+    pixels: Vec<Color>
 }
 
 
@@ -24,12 +28,12 @@ impl Image {
         Image {
             width: width,
             height: height,
-            pixels: vec![super::BLACK; width*height]
+            pixels: vec![Color::black(); width*height]
         }
     }
 
 
-    pub fn accum(&mut self, other: &Vec<super::Color>) {
+    pub fn accum(&mut self, other: &Vec<Color>) {
         assert!((self.width*self.height) == other.len());
         for i in 0..(self.width*self.height) {
             self.pixels[i].r += other[i].r;

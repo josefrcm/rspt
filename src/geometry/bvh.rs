@@ -1,3 +1,7 @@
+use geometry::*;
+
+
+
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public data types
 // --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -16,7 +20,7 @@ pub enum Node<T> {
 /// Recursive bounding volume hierarchy
 #[derive(Clone)]
 pub struct BVH<T> {
-    bounds: [super::BoundingBox; NODE_SIZE],
+    bounds: [BoundingBox; NODE_SIZE],
     children: [Node<T>; NODE_SIZE]
 }
 
@@ -33,7 +37,7 @@ impl<T: Clone> BVH<T> {
     /// An empty tree
     pub fn empty() -> Self {
         BVH {
-            bounds: [super::BoundingBox::empty(); NODE_SIZE],
+            bounds: [BoundingBox::empty(); NODE_SIZE],
             children: [Node::Empty, Node::Empty, Node::Empty, Node::Empty]
         }
     }
@@ -41,7 +45,7 @@ impl<T: Clone> BVH<T> {
 
     ///
     /// Constructor
-    pub fn build(elements: &[(T, super::BoundingBox)]) -> Self {
+    pub fn build(elements: &[(T, BoundingBox)]) -> Self {
         let leaves = Self::build_leaves(elements);
         Self::build_branches(&leaves)
     }
@@ -49,31 +53,15 @@ impl<T: Clone> BVH<T> {
 
     ///
     /// First stage: turn the leaves into nodes
-    fn build_leaves(elements: &[(T, super::BoundingBox)]) -> Vec<Box<BVH<T>>> {
-        let mut leaves = Vec::new();
-        for c in elements.chunks(NODE_SIZE) {
-            let mut new_node = Self::empty();
-            let mut i = 0;
-            for e in c {
-                new_node.children[i] = Node::Leaf(e.0.clone());
-                new_node.bounds[i] = e.1;
-                i = i+1;
+    fn build_leaves(elements: &[(T, BoundingBox)]) -> Vec<Box<BVH<T>>> {
+        elements.chunks(NODE_SIZE).map(|c| {
+            let mut leaf = Self::empty();
+            for i in 0..c.len() {
+                leaf.children[i] = Node::Leaf(c[i].0.clone());
+                leaf.bounds[i] = c[i].1;
             }
-            leaves.push(Box::new(new_node));
-        }
-
-        /*for c in elements.chunks(NODE_SIZE) {
-            let mut new_node = Self::empty();
-            let mut i = 0;
-            for e in c {
-                new_node.children[i] = Node::Leaf(e.0);
-                new_node.bounds[i] = e.1;
-                i = i+1;
-            }
-            leaves.push(Box::new(new_node));
-        }*/
-
-        leaves
+            Box::new(leaf)
+        }).collect()
     }
 
 
@@ -95,7 +83,7 @@ impl<T: Clone> BVH<T> {
                 let mut node = Self::empty();
                 for i in 0..c.len() {                
                     node.children[i] = Node::Branch(c[i].clone());
-                    node.bounds[i] = c[i].bounds[0].merge(&c[i].bounds[1]).merge(&c[i].bounds[2]).merge(&c[i].bounds[3]);
+                    node.bounds[i] = union(&c[i].bounds);
                 }
                 leaves.push(Box::new(node));
             }
@@ -108,10 +96,10 @@ impl<T: Clone> BVH<T> {
 
 ///
 /// Ray intersection
-impl<T: super::Intersectable> super::Intersectable for BVH<T> {
-    fn intersect(&self, ray: super::Ray) -> Option<super::Intersection> {
+impl<T: Intersectable> Intersectable for BVH<T> {
+    fn intersect(&self, ray: Ray) -> Option<Intersection> {
         // Check each child in order
-        let mut nearest_hit = super::Intersection::empty();
+        let mut nearest_hit = Intersection::empty();
         for i in 0..self.bounds.len() {
             let intersection = self.bounds[i].intersect(ray);
             if intersection.start < nearest_hit.distance {

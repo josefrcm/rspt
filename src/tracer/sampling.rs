@@ -3,6 +3,7 @@ use rayon::prelude::*;
 use std::f32;
 
 use geometry;
+use tracer::*;
 
 
 
@@ -10,7 +11,7 @@ use geometry;
 // Public functions
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
-pub fn sample(scene: &super::Scene, camera: &super::Camera, max_bounces: usize) -> Vec<super::Color>
+pub fn sample(scene: &Scene, camera: &Camera, max_bounces: usize) -> Vec<Color>
 {
     let rays = camera.make_rays();
     let sampling = rays.par_iter().map(|&r| sample_scene(&scene, r, max_bounces)).collect();
@@ -23,22 +24,21 @@ pub fn sample(scene: &super::Scene, camera: &super::Camera, max_bounces: usize) 
 // Private functions
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
-fn sample_scene(geometry: &super::Scene, ray: geometry::Ray, max_iter : usize) -> super::Color {
+fn sample_scene(geometry: &Scene, ray: geometry::Ray, max_iter : usize) -> Color {
     if max_iter == 0 {
-        super::BLACK
+        Color::black()
     } else {
         let hit = geometry.intersect(ray);
         
         match hit {
-            None => super::BLACK,
-            //None => super::WHITE,
+            None => Color::black(),
+            //None => WHITE,
             // Recursive tracing
             Some(intersection) => {
                 let s = sample_hemisphere(intersection.normal.xyz(), ray.direction.xyz());
-                let s2 = nalgebra::Vector4::new(s.x, s.y, s.z, 0.0);
                 let r = geometry::Ray {
-                    origin: intersection.point + 1.0e-3 * s2,
-                    direction: s2
+                    origin: intersection.point + 1.0e-3 * s,
+                    direction: s
                 };
                 let d = sample_scene(geometry, r, max_iter-1);
                 intersection.material.emission + intersection.normal.dot(&r.direction) * intersection.material.diffuse * d

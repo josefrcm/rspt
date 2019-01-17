@@ -61,7 +61,7 @@ fn parse_options() -> ProgramOptions {
                                .required(true))
                           .arg(clap::Arg::with_name("camera")
                                .short("c")
-                               .long("input")
+                               .long("camera")
                                .value_name("FILE")
                                .help("Path to the camera definition file")
                                .takes_value(true)

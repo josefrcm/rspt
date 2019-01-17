@@ -19,27 +19,32 @@ pub struct Color {
 // Public functions
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
-pub const BLACK: super::Color = super::Color{
-    r: 0.0,
-    g: 0.0,
-    b: 0.0
-};
+impl Color {
+    pub fn black() -> Self {
+        Color{
+            r: 0.0,
+            g: 0.0,
+            b: 0.0
+        }
+    }
+
+
+    pub fn white() -> Self {
+        Color{
+            r: 1.0,
+            g: 1.0,
+            b: 1.0
+        }
+    }
+}
 
 
 
-pub const WHITE: super::Color = super::Color{
-    r: 1.0,
-    g: 1.0,
-    b: 1.0
-};
+impl ops::Add<Color> for Color {
+    type Output = Color;
 
-
-
-impl ops::Add<super::Color> for Color {
-    type Output = super::Color;
-
-    fn add(self, _rhs: super::Color) -> super::Color {
-        super::Color {
+    fn add(self, _rhs: Color) -> Color {
+        Color {
             r : self.r + _rhs.r,
             g : self.g + _rhs.g,
             b : self.b + _rhs.b
@@ -49,11 +54,11 @@ impl ops::Add<super::Color> for Color {
 
 
 
-impl ops::Mul<super::Color> for f32 {
-    type Output = super::Color;
+impl ops::Mul<Color> for f32 {
+    type Output = Color;
 
-    fn mul(self, _rhs: super::Color) -> super::Color {
-        super::Color {
+    fn mul(self, _rhs: Color) -> Color {
+        Color {
             r : self * _rhs.r,
             g : self * _rhs.g,
             b : self * _rhs.b
@@ -63,11 +68,11 @@ impl ops::Mul<super::Color> for f32 {
 
 
 
-impl ops::Mul<super::Color> for Color {
-    type Output = super::Color;
+impl ops::Mul<Color> for Color {
+    type Output = Color;
 
-    fn mul(self, _rhs: super::Color) -> super::Color {
-        super::Color {
+    fn mul(self, _rhs: Color) -> Color {
+        Color {
             r : self.r * _rhs.r,
             g : self.g * _rhs.g,
             b : self.b * _rhs.b

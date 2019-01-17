@@ -5,7 +5,7 @@ use std::io::BufRead;
 use std::fs::File;
 use std::path::Path;
 
-use geometry::util::Intersectable;
+use geometry::*;
 
 
 
@@ -17,8 +17,8 @@ use geometry::util::Intersectable;
 /// Vertex
 #[derive(Clone)]
 pub struct Vertex {
-    pub coords: nalgebra::Vector4<f32>,
-    pub normal: nalgebra::Vector4<f32>
+    pub coords: nalgebra::Point3<f32>,
+    pub normal: nalgebra::Vector3<f32>
 }
 
 
@@ -38,7 +38,7 @@ pub struct Triangle {
 #[derive(Clone)]
 pub struct Mesh {
     pub vertices: Vec<Vertex>,
-    pub faces: super::BVH<super::TriangleBundle>
+    pub faces: BVH<TriangleBundle>
 }
 
 
@@ -50,15 +50,15 @@ pub struct Mesh {
 impl Mesh {
     ///
     /// Create a new mesh from an array of vertices and an array of triangles
-    pub fn new(vertices: Vec<super::Vertex>, faces: Vec<super::Triangle>) -> Self {
+    pub fn new(vertices: Vec<Vertex>, faces: Vec<Triangle>) -> Self {
         // Build the acceleration structure
         let mut bundles = Vec::new();
-        for c in faces.chunks(super::BUNDLE_SIZE) {
-            let foo = super::TriangleBundle::build(&vertices, &c.to_vec());
-            let bar = super::BoundingBox::build2(&vertices, &c.to_vec());
+        for c in faces.chunks(BUNDLE_SIZE) {
+            let foo = TriangleBundle::new(&vertices, &c.to_vec());
+            let bar = BoundingBox::build2(&vertices, &c.to_vec());
             bundles.push((foo, bar));
         }
-        let tree = super::BVH::build(&bundles);
+        let tree = BVH::build(&bundles);
 
         // Done
         Mesh {
@@ -76,8 +76,8 @@ impl Mesh {
         let file = BufReader::new(&f);
         let mut lines = file.lines();
         
-        let mut vertices : Vec<super::Vertex> = Vec::new();
-        let mut faces : Vec<super::Triangle> = Vec::new();
+        let mut vertices : Vec<Vertex> = Vec::new();
+        let mut faces : Vec<Triangle> = Vec::new();
         let mut num_vertices : usize = 0;
         let mut num_faces : usize = 0;
         
@@ -112,9 +112,9 @@ impl Mesh {
                     let nx = fields[3].parse::<f32>().unwrap();
                     let ny = fields[4].parse::<f32>().unwrap();
                     let nz = fields[5].parse::<f32>().unwrap();
-                    vertices.push(super::Vertex {
-                        coords: nalgebra::Vector4::new(vx, vy, vz, 1.0),
-                        normal: nalgebra::Vector4::new(nx, ny, nz, 0.0)
+                    vertices.push(Vertex {
+                        coords: nalgebra::Point3::new(vx, vy, vz),
+                        normal: nalgebra::Vector3::new(nx, ny, nz)
                     });
                 }
             }
@@ -149,8 +149,8 @@ impl Mesh {
 
     ///
     /// Compute the bounding box
-    pub fn bounds(&self) -> super::BoundingBox {
-        super::BoundingBox::build(&self.vertices)
+    pub fn bounds(&self) -> BoundingBox {
+        BoundingBox::build(&self.vertices)
     }
 }
 
@@ -161,17 +161,17 @@ impl Mesh {
 impl Intersectable for Mesh {
     ///
     /// Compute the mesh-ray intersection
-    fn intersect(&self, ray: super::Ray) -> Option<super::Intersection> {
+    fn intersect(&self, ray: Ray) -> Option<Intersection> {
         match self.faces.intersect(ray) {
             None => None,
             Some(hit) => {
                 let v1 = &self.vertices[hit.v1 as usize];
                 let v2 = &self.vertices[hit.v2 as usize];
                 let v3 = &self.vertices[hit.v3 as usize];
-                let point = hit.alpha * v1.coords + hit.beta * v2.coords + hit.gamma * v3.coords;
+                let point = hit.alpha * v1.coords.coords + hit.beta * v2.coords.coords + hit.gamma * v3.coords.coords;
                 let normal = (hit.alpha * v1.normal + hit.beta * v2.normal + hit.gamma * v3.normal).normalize();
-                Some(super::Intersection {
-                    point: point,
+                Some(Intersection {
+                    point: nalgebra::Point3::new(point.x, point.y, point.z),
                     normal: normal,
                     distance: hit.distance,
                     material: hit.material,

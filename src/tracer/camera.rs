@@ -1,12 +1,13 @@
-use geometry;
-use rand; //::{Rng, thread_rng};
-
-use serde_json;
-
 use std;
 use std::f32;
 use std::fs::File;
 use std::path::Path;
+
+use rand;
+use serde_json;
+
+use geometry;
+use tracer::*;
 
 
 
@@ -18,7 +19,7 @@ use std::path::Path;
 /// Camera definition
 #[derive(Clone, Serialize, Deserialize)]
 struct CameraDef {
-    pub position: nalgebra::Vector4<f32>,
+    pub position: nalgebra::Point3<f32>,
     pub orientation: nalgebra::UnitQuaternion<f32>
 }
 
@@ -27,7 +28,7 @@ struct CameraDef {
 ///
 /// Camera
 pub struct Camera {
-    pub position: nalgebra::Vector4<f32>,
+    pub position: nalgebra::Point3<f32>,
     pub orientation: nalgebra::UnitQuaternion<f32>,
     pub resolution: usize
 }
@@ -67,7 +68,7 @@ impl Camera {
             for x in 0..self.resolution {
                 let xr = 2.0*(x as f32 + xbias)/(self.resolution as f32) - 1.0;
                 let yr = -2.0*(y as f32 + ybias)/(self.resolution as f32) + 1.0;
-                let direction = nalgebra::Vector4::new(xr, 1.0, yr, 0.0).normalize();
+                let direction = nalgebra::Vector3::new(xr, 1.0, yr).normalize();
                 rays.push(geometry::Ray {
                     origin: self.position,
                     direction: direction

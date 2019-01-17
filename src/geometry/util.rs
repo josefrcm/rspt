@@ -1,4 +1,5 @@
 use std::f32;
+use geometry::*;
 
 
 
@@ -10,8 +11,8 @@ use std::f32;
 /// Ray
 #[derive(Clone, Copy)]
 pub struct Ray {
-    pub origin: nalgebra::Vector4<f32>,
-    pub direction: nalgebra::Vector4<f32>
+    pub origin: nalgebra::Point3<f32>,
+    pub direction: nalgebra::Vector3<f32>
 }
 
 
@@ -24,18 +25,8 @@ pub struct Interval {
 }
 
 
-impl Interval {
-    pub fn new(s: f32, f: f32) -> Self {
-        Interval {
-            start: f32::min(s, f),
-            finish: f32::max(s, f)
-        }
-    }
-}
 
-
-
-///
+/*///
 /// Ray
 #[derive(Clone, Copy)]
 pub struct Segment {
@@ -43,6 +34,15 @@ pub struct Segment {
     pub direction: nalgebra::Vector4<f32>,
     pub start: f32,
     pub finish: f32
+}*/
+
+
+///
+/// Barycentric coordinates on a triangle
+pub struct Barycentric {
+    pub alpha: f32,
+    pub beta: f32,
+    pub gamma: f32
 }
 
 
@@ -58,8 +58,8 @@ pub struct Intersection {
     pub v2: u32,
     pub v3: u32,
     pub material: u32,
-    pub point: nalgebra::Vector4<f32>,
-    pub normal: nalgebra::Vector4<f32>
+    pub point: nalgebra::Point3<f32>,
+    pub normal: nalgebra::Vector3<f32>
 }
 
 
@@ -78,6 +78,17 @@ pub trait Intersectable {
 // Public methods
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
+impl Interval {
+    pub fn new(s: f32, f: f32) -> Self {
+        Interval {
+            start: f32::min(s, f),
+            finish: f32::max(s, f)
+        }
+    }
+}
+
+
+
 impl Intersection {
     pub fn empty() -> Self {
         Intersection {
@@ -89,7 +100,7 @@ impl Intersection {
             v2: 0,
             v3: 0,
             material: 0,
-            point: nalgebra::zero(),
+            point: nalgebra::origin(),
             normal: nalgebra::zero()
         }
     }     

@@ -1,7 +1,3 @@
-use nalgebra;
-
-use serde_json;
-
 use std;
 use std::f32;
 use std::collections::HashMap;
@@ -9,8 +5,12 @@ use std::fs::File;
 use std::path::Path;
 use std::ops::Deref;
 
+use nalgebra;
+use serde_json;
+
 use geometry;
 use geometry::util::Intersectable;
+use tracer::*;
 
 
 
@@ -27,7 +27,7 @@ pub struct InstanceDef {
 
 #[derive(Serialize, Deserialize)]
 pub struct SceneDef {
-    pub materials: HashMap<String, super::Material>,
+    pub materials: HashMap<String, Material>,
     pub meshes: Vec<InstanceDef>
 }
 
@@ -36,7 +36,7 @@ pub struct SceneDef {
 ///
 /// World geometry
 pub struct Scene {    
-    pub materials: Vec<super::Material>,
+    pub materials: Vec<Material>,
     pub geometry: geometry::BVH<geometry::Mesh>
 }
 
@@ -45,10 +45,10 @@ pub struct Scene {
 ///
 /// Intersection against the world
 pub struct SceneIntersection<'a> {
-    pub point: nalgebra::Vector4<f32>,
-    pub normal: nalgebra::Vector4<f32>,
+    pub point: nalgebra::Point3<f32>,
+    pub normal: nalgebra::Vector3<f32>,
     pub distance: f32,
-    pub material: &'a super::Material
+    pub material: &'a Material
 }
 
 
@@ -67,7 +67,7 @@ impl Scene {
         // Load each model
         let base_dir = filename.parent().unwrap();
         let mut materials = Vec::new();
-        materials.push(super::Material::none());
+        materials.push(Material::none());
 
         let mut meshes = Vec::new();
         for m in &json.meshes {
