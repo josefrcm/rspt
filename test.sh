@@ -3,4 +3,4 @@
 export RUST_BACKTRACE=1
 cargo build --release
 rm render.png
-target/release/rspt -s 100 -i data/scene.json -c data/camera.json -o render.png
+target/release/rspt --input data/scene.json --camera data/camera.json --output render.png --num-samples 1000 --max-bounces 6

@@ -45,6 +45,7 @@ pub struct Scene {
 ///
 /// Intersection against the world
 pub struct SceneIntersection<'a> {
+    pub ray: geometry::Ray,
     pub point: nalgebra::Point3<f32>,
     pub normal: nalgebra::Vector3<f32>,
     pub distance: f32,
@@ -98,14 +99,19 @@ impl Scene {
     ///
     /// Intersect a ray against the world
     pub fn intersect(&self, ray: geometry::Ray) -> Option<SceneIntersection> {
-        match self.geometry.intersect(ray) {
-            None => None,
-            Some(hit) => Some(SceneIntersection {
-                point: hit.point,
-                normal: hit.normal,
-                distance: hit.distance,
-                material: &self.materials[hit.material as usize]
-            })
+        if ray.direction.x.is_nan() || ray.direction.y.is_nan() || ray.direction.z.is_nan() {
+            None
+        } else {
+            match self.geometry.intersect(ray) {
+                None => None,
+                Some(hit) => Some(SceneIntersection {
+                    ray: ray,
+                    point: hit.point,
+                    normal: hit.normal,
+                    distance: hit.distance,
+                    material: &self.materials[hit.material as usize]
+                })
+            }
         }
     }
 }

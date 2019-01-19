@@ -59,14 +59,15 @@ impl Image {
             high = f32::max(high, self.pixels[i].g);
             high = f32::max(high, self.pixels[i].b);
         }
-        let scale = 255.0 / high;
+        let scale = 1.0 / high;
+        let gamma = 1.0 / 2.2;
         
         // Reescale the image to the range [0, 255]
         let mut buf = vec![0; 3*self.width*self.height];
         for i in 0..(self.width*self.height) {
-            buf[3*i + 0] = (scale * self.pixels[i].r) as u8;
-            buf[3*i + 1] = (scale * self.pixels[i].g) as u8;
-            buf[3*i + 2] = (scale * self.pixels[i].b) as u8;
+            buf[3*i + 0] = (255.0 * (scale * self.pixels[i].r).powf(gamma)) as u8;
+            buf[3*i + 1] = (255.0 * (scale * self.pixels[i].g).powf(gamma)) as u8;
+            buf[3*i + 2] = (255.0 * (scale * self.pixels[i].b).powf(gamma)) as u8;
         }
 
         // Save the image as PNG
