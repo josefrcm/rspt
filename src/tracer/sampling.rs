@@ -24,8 +24,6 @@ pub fn sample(scene: &Scene, camera: &Camera, max_bounces: usize) -> Vec<Color>
 // Private functions
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
-///
-/// 
 pub fn sample_scene(scene: &Scene, ray: geometry::Ray, max_iter : usize) -> Color {
     if max_iter == 0 {
         Color::black()

@@ -20,7 +20,8 @@ use tracer::*;
 #[derive(Clone, Serialize, Deserialize)]
 struct CameraDef {
     pub position: nalgebra::Point3<f32>,
-    pub orientation: nalgebra::UnitQuaternion<f32>
+    pub orientation: nalgebra::UnitQuaternion<f32>,
+    pub focal: f32,
 }
 
 
@@ -30,7 +31,10 @@ struct CameraDef {
 pub struct Camera {
     pub position: nalgebra::Point3<f32>,
     pub orientation: nalgebra::UnitQuaternion<f32>,
-    pub resolution: usize
+    pub width: usize,
+    pub height: usize,
+    pub focal: f32,
+    pub aspect: f32
 }
 
 
@@ -42,7 +46,7 @@ pub struct Camera {
 impl Camera {
     ///
     /// Load the camera description from a JSON file
-    pub fn from_json(filename: &Path, resolution: usize) -> Result<Camera, std::io::Error> {
+    pub fn from_json(filename: &Path, width: usize, height: usize) -> Result<Camera, std::io::Error> {
         // Load the camera description from the JSON file
         let file = File::open(filename)?;
         let json : CameraDef = serde_json::from_reader(file)?;
@@ -51,7 +55,10 @@ impl Camera {
         Ok(Camera {
             position: json.position,
             orientation: json.orientation,
-            resolution: resolution
+            width: width,
+            height: height,
+            focal: json.focal,
+            aspect: (width as f32) / (height as f32)
         })
     }
 
@@ -62,13 +69,15 @@ impl Camera {
     /// TODO: add 
     pub fn make_rays(&self) -> Vec<geometry::Ray> {
         let mut rays: Vec<geometry::Ray> = Vec::new();
-        let xbias = rand::random::<f32>();
-        let ybias = rand::random::<f32>();
-        for y in 0..self.resolution {
-            for x in 0..self.resolution {
-                let xr = 2.0*(x as f32 + xbias)/(self.resolution as f32) - 1.0;
-                let yr = -2.0*(y as f32 + ybias)/(self.resolution as f32) + 1.0;
-                let direction = nalgebra::Vector3::new(xr, 1.0, yr).normalize();
+        let xbias = rand::random::<f32>() - (self.width as f32) / 2.0;
+        let ybias = rand::random::<f32>() - (self.height as f32) / 2.0;
+        let foobar = 1.0 / f32::min(self.width as f32, self.height as f32);
+
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let xr = foobar * (x as f32 + xbias);
+                let yr = -foobar * (y as f32 + ybias);
+                let direction = nalgebra::Vector3::new(xr, self.focal, yr).normalize();
                 rays.push(geometry::Ray {
                     origin: self.position,
                     direction: direction

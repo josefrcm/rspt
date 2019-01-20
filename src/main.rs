@@ -16,7 +16,8 @@ mod tracer;
 ///
 /// Program options
 struct ProgramOptions {
-    resolution: usize,
+    width: usize,
+    height: usize,
     max_bounces: usize,
     num_samples: usize,
     scene_file: std::path::PathBuf,
@@ -34,17 +35,23 @@ fn parse_options() -> ProgramOptions {
                           .version("0.1")
                           .author("José Franco Campos <josefrancocampos@gmail.com>")
                           .about("A toy path-tracer in Rust")
-                          .arg(clap::Arg::with_name("num_samples")
+                          .arg(clap::Arg::with_name("num-samples")
                                .short("s")
                                .long("num-samples")
                                .value_name("SAMPLES")
                                .help("Number of samples to trace - More samples, more quality")
                                .takes_value(true))
-                          .arg(clap::Arg::with_name("resolution")
-                               .short("r")
-                               .long("resolution")
+                          .arg(clap::Arg::with_name("width")
+                               .short("w")
+                               .long("width")
                                .value_name("PIXELS")
-                               .help("Image resolution - The output image will be squared")
+                               .help("Image width")
+                               .takes_value(true))
+                          .arg(clap::Arg::with_name("height")
+                               .short("h")
+                               .long("height")
+                               .value_name("PIXELS")
+                               .help("Image height")
                                .takes_value(true))
                           .arg(clap::Arg::with_name("max-bounces")
                                .short("b")
@@ -77,9 +84,10 @@ fn parse_options() -> ProgramOptions {
 
     // Read the values
     ProgramOptions {
-        resolution: matches.value_of("resolution").unwrap_or("1024").parse::<usize>().unwrap(),
-        num_samples: matches.value_of("num_samples").unwrap_or("10").parse::<usize>().unwrap(),
-        max_bounces: matches.value_of("max_bounces").unwrap_or("4").parse::<usize>().unwrap(),
+        width: matches.value_of("width").unwrap_or("1024").parse::<usize>().unwrap(),
+        height: matches.value_of("height").unwrap_or("1024").parse::<usize>().unwrap(),
+        num_samples: matches.value_of("num-samples").unwrap_or("10").parse::<usize>().unwrap(),
+        max_bounces: matches.value_of("max-bounces").unwrap_or("4").parse::<usize>().unwrap(),
         scene_file: std::path::PathBuf::from(matches.value_of("input").unwrap_or("").to_string()),
         camera_file: std::path::PathBuf::from(matches.value_of("camera").unwrap_or("").to_string()),
         image_file: std::path::PathBuf::from(matches.value_of("output").unwrap_or("").to_string())
@@ -109,12 +117,12 @@ fn main() {
     let load_start = std::time::Instant::now();
     let options = parse_options();
     let scene = tracer::Scene::from_json(&options.scene_file).unwrap();
-    let mut camera = tracer::Camera::from_json(&options.camera_file, options.resolution).unwrap();
+    let mut camera = tracer::Camera::from_json(&options.camera_file, options.width, options.height).unwrap();
     let load_time = load_start.elapsed();
 
     // Render the scene
     let render_start = std::time::Instant::now();
-    let mut fb = tracer::Image::new(options.resolution, options.resolution);
+    let mut fb = tracer::Image::new(options.width, options.height);
     for i in 0..options.num_samples {
         println!("Rendering sample {}/{}", i+1, options.num_samples);
         let sampling = tracer::sample(&scene, &mut camera, options.max_bounces);

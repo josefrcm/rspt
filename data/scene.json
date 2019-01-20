@@ -47,7 +47,7 @@
             "material": "white-diffuse"
         },
         {
-            "mesh": "models/suzanne.ply",
+            "mesh": "models/suzanne2.ply",
             "material": "red-diffuse"
         }
     ]

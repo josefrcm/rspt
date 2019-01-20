@@ -56,7 +56,7 @@ impl Material {
                 *emission
             },
             Material::Standard { emission, diffuse } => {
-                (*emission) + (-normal.dot(&incident) * (*diffuse) * foobar)
+                (*emission) + (normal.dot(&outgoing) * (*diffuse) * foobar)
             }
         }
     }
