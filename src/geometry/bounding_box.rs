@@ -1,8 +1,6 @@
 use std::f32;
 
-use geometry::*;
-
-
+use super::*;
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public data types
@@ -13,10 +11,8 @@ use geometry::*;
 #[derive(Clone, Copy)]
 pub struct BoundingBox {
     pub lower: nalgebra::Point3<f32>,
-    pub upper: nalgebra::Point3<f32>
+    pub upper: nalgebra::Point3<f32>,
 }
-
-
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public functions
@@ -30,17 +26,17 @@ impl BoundingBox {
     pub fn empty() -> Self {
         BoundingBox {
             lower: nalgebra::Point3::new(f32::NAN, f32::NAN, f32::NAN),
-            upper: nalgebra::Point3::new(f32::NAN, f32::NAN, f32::NAN)
+            upper: nalgebra::Point3::new(f32::NAN, f32::NAN, f32::NAN),
         }
     }
-
 
     ///
     /// Extract the bounding box of a group of vertices
     pub fn build(vertices: &[Vertex]) -> Self {
         // Initialization
         let mut lower = nalgebra::Point3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
-        let mut upper = nalgebra::Point3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
+        let mut upper =
+            nalgebra::Point3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
 
         // Find the lower and upper values
         for v in vertices {
@@ -56,17 +52,17 @@ impl BoundingBox {
         // Done
         BoundingBox {
             lower: lower,
-            upper: upper
+            upper: upper,
         }
     }
-
 
     ///
     /// Extract the bounding box of a group of faces and its corresponding vertices
     pub fn build2(vertices: &[Vertex], faces: &[Triangle]) -> Self {
         // Compute the bounds of the geometry
         let mut lower = nalgebra::Point3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
-        let mut upper = nalgebra::Point3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
+        let mut upper =
+            nalgebra::Point3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
         for f in faces {
             let v1 = vertices[f.v1 as usize].coords;
             let v2 = vertices[f.v2 as usize].coords;
@@ -100,10 +96,9 @@ impl BoundingBox {
         // Done
         BoundingBox {
             lower: lower,
-            upper: upper
+            upper: upper,
         }
     }
-
 
     ///
     /// Compute the intersection of a ray against a bounding box
@@ -134,8 +129,6 @@ impl BoundingBox {
     }
 }
 
-
-
 ///
 /// Compute the union of two bounding boxes
 pub fn union(boxes: &[BoundingBox]) -> BoundingBox {
@@ -157,6 +150,6 @@ pub fn union(boxes: &[BoundingBox]) -> BoundingBox {
     // Done
     BoundingBox {
         lower: lower,
-        upper: upper
+        upper: upper,
     }
 }

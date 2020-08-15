@@ -4,12 +4,9 @@ use std::fs::File;
 use std::path::Path;
 
 use rand;
-use serde_json;
+use ron;
 
-use geometry;
-use tracer::*;
-
-
+use crate::geometry;
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public data types
@@ -24,8 +21,6 @@ struct CameraDef {
     pub focal: f32,
 }
 
-
-
 ///
 /// Camera
 pub struct Camera {
@@ -34,10 +29,8 @@ pub struct Camera {
     pub width: usize,
     pub height: usize,
     pub focal: f32,
-    pub aspect: f32
+    pub aspect: f32,
 }
-
-
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public functions
@@ -46,10 +39,14 @@ pub struct Camera {
 impl Camera {
     ///
     /// Load the camera description from a JSON file
-    pub fn from_json(filename: &Path, width: usize, height: usize) -> Result<Camera, std::io::Error> {
+    pub fn from_json(
+        filename: &Path,
+        width: usize,
+        height: usize,
+    ) -> Result<Camera, std::io::Error> {
         // Load the camera description from the JSON file
         let file = File::open(filename)?;
-        let json : CameraDef = serde_json::from_reader(file)?;
+        let json: CameraDef = ron::de::from_reader(file).unwrap();
 
         // Build the camera
         Ok(Camera {
@@ -58,15 +55,13 @@ impl Camera {
             width: width,
             height: height,
             focal: json.focal,
-            aspect: (width as f32) / (height as f32)
+            aspect: (width as f32) / (height as f32),
         })
     }
 
-
-
     ///
     /// Trace rays from the camera
-    /// TODO: add 
+    /// TODO: add
     pub fn make_rays(&self) -> Vec<geometry::Ray> {
         let mut rays: Vec<geometry::Ray> = Vec::new();
         let xbias = rand::random::<f32>() - (self.width as f32) / 2.0;
@@ -80,7 +75,7 @@ impl Camera {
                 let direction = nalgebra::Vector3::new(xr, self.focal, yr).normalize();
                 rays.push(geometry::Ray {
                     origin: self.position,
-                    direction: direction
+                    direction: direction,
                 });
             }
         }

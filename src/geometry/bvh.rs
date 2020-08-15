@@ -1,30 +1,25 @@
-use geometry::*;
-
-
+use super::*;
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public data types
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
-const NODE_SIZE : usize = 4;
+const NODE_SIZE: usize = 4;
 
 #[derive(Clone)]
 pub enum Node<T> {
     Empty,
     Leaf(T),
-    Branch(Box<BVH<T>>)
+    Branch(Box<BVH<T>>),
 }
-
 
 ///
 /// Recursive bounding volume hierarchy
 #[derive(Clone)]
 pub struct BVH<T> {
     bounds: [BoundingBox; NODE_SIZE],
-    children: [Node<T>; NODE_SIZE]
+    children: [Node<T>; NODE_SIZE],
 }
-
-
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public functions
@@ -38,10 +33,9 @@ impl<T: Clone> BVH<T> {
     pub fn empty() -> Self {
         BVH {
             bounds: [BoundingBox::empty(); NODE_SIZE],
-            children: [Node::Empty, Node::Empty, Node::Empty, Node::Empty]
+            children: [Node::Empty, Node::Empty, Node::Empty, Node::Empty],
         }
     }
-
 
     ///
     /// Constructor
@@ -50,20 +44,21 @@ impl<T: Clone> BVH<T> {
         Self::build_branches(&leaves)
     }
 
-
     ///
     /// First stage: turn the leaves into nodes
     fn build_leaves(elements: &[(T, BoundingBox)]) -> Vec<Box<BVH<T>>> {
-        elements.chunks(NODE_SIZE).map(|c| {
-            let mut leaf = Self::empty();
-            for i in 0..c.len() {
-                leaf.children[i] = Node::Leaf(c[i].0.clone());
-                leaf.bounds[i] = c[i].1;
-            }
-            Box::new(leaf)
-        }).collect()
+        elements
+            .chunks(NODE_SIZE)
+            .map(|c| {
+                let mut leaf = Self::empty();
+                for i in 0..c.len() {
+                    leaf.children[i] = Node::Leaf(c[i].0.clone());
+                    leaf.bounds[i] = c[i].1;
+                }
+                Box::new(leaf)
+            })
+            .collect()
     }
-
 
     ///
     /// Second stage: recursively merge the nodes into bigger nodes
@@ -81,18 +76,16 @@ impl<T: Clone> BVH<T> {
             let mut leaves = Vec::new();
             for c in elements.chunks(NODE_SIZE) {
                 let mut node = Self::empty();
-                for i in 0..c.len() {                
+                for i in 0..c.len() {
                     node.children[i] = Node::Branch(c[i].clone());
                     node.bounds[i] = union(&c[i].bounds);
                 }
                 leaves.push(Box::new(node));
             }
             Self::build_branches(&leaves)
-        }        
+        }
     }
 }
-
-
 
 ///
 /// Ray intersection
@@ -104,27 +97,23 @@ impl<T: Intersectable> Intersectable for BVH<T> {
             let intersection = self.bounds[i].intersect(ray);
             if intersection.start < nearest_hit.distance {
                 match &self.children[i] {
-                    Node::Empty => {},
-                    Node::Leaf(x) => {
-                        match x.intersect(ray) {
-                            Some(hit) => {
-                                if hit.distance < nearest_hit.distance {
-                                    nearest_hit = hit;
-                                }
-                            },
-                            None => {}
+                    Node::Empty => {}
+                    Node::Leaf(x) => match x.intersect(ray) {
+                        Some(hit) => {
+                            if hit.distance < nearest_hit.distance {
+                                nearest_hit = hit;
+                            }
                         }
+                        None => {}
                     },
-                    Node::Branch(xs) => {
-                        match xs.intersect(ray) {
-                            Some(hit) => {
-                                if hit.distance < nearest_hit.distance {
-                                    nearest_hit = hit;
-                                }
-                            },
-                            None => {}
+                    Node::Branch(xs) => match xs.intersect(ray) {
+                        Some(hit) => {
+                            if hit.distance < nearest_hit.distance {
+                                nearest_hit = hit;
+                            }
                         }
-                    }
+                        None => {}
+                    },
                 }
             }
         }

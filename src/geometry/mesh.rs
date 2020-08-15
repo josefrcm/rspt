@@ -1,13 +1,11 @@
 use std;
 use std::f32;
-use std::io::BufReader;
-use std::io::BufRead;
 use std::fs::File;
+use std::io::BufRead;
+use std::io::BufReader;
 use std::path::Path;
 
-use geometry::*;
-
-
+use super::*;
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public data types
@@ -18,34 +16,41 @@ use geometry::*;
 #[derive(Clone)]
 pub struct Vertex {
     pub coords: nalgebra::Point3<f32>,
-    pub normal: nalgebra::Vector3<f32>
+    pub normal: nalgebra::Vector3<f32>,
 }
-
 
 ///
 /// Triangle
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Triangle {
     pub v1: u32,
     pub v2: u32,
     pub v3: u32,
-    pub material: u32
+    pub material: u32,
 }
-
 
 ///
 /// Polygon mesh
 #[derive(Clone)]
 pub struct Mesh {
     pub vertices: Vec<Vertex>,
-    pub faces: BVH<TriangleBundle>
+    pub faces: BVH<TriangleBundle>,
 }
-
-
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public functions
 // --------------------------------------------------------------------------------------------------------------------------------------------------
+
+impl Triangle {
+    pub fn zero() -> Self {
+        Self {
+            v1: 0,
+            v2: 0,
+            v3: 0,
+            material: 0,
+        }
+    }
+}
 
 impl Mesh {
     ///
@@ -63,31 +68,30 @@ impl Mesh {
         // Done
         Mesh {
             vertices: vertices,
-            faces: tree
+            faces: tree,
         }
     }
-
 
     ///
     /// Load a mesh from a PLY file
     pub fn load_ply(filename: &Path, material: u32) -> Result<Self, std::io::Error> {
         println!("Loading mesh {}", filename.display());
-        let f = try!(File::open(filename));
+        let f = File::open(filename)?;
         let file = BufReader::new(&f);
         let mut lines = file.lines();
-        
-        let mut vertices : Vec<Vertex> = Vec::new();
-        let mut faces : Vec<Triangle> = Vec::new();
-        let mut num_vertices : usize = 0;
-        let mut num_faces : usize = 0;
-        
+
+        let mut vertices: Vec<Vertex> = Vec::new();
+        let mut faces: Vec<Triangle> = Vec::new();
+        let mut num_vertices: usize = 0;
+        let mut num_faces: usize = 0;
+
         // Read the header
         loop {
             match lines.next() {
                 None => break,
                 Some(line) => {
                     let foo = line.unwrap();
-                    let fields : Vec<&str> = foo.split(" ").collect();
+                    let fields: Vec<&str> = foo.split(" ").collect();
                     if fields[0] == "end_header" {
                         break;
                     } else if (fields[0] == "element") && (fields[1] == "vertex") {
@@ -98,14 +102,14 @@ impl Mesh {
                 }
             }
         }
-        
+
         // Read the vertices
         for _i in 0..num_vertices {
             match lines.next() {
                 None => break,
                 Some(line) => {
                     let foo = line.unwrap();
-                    let fields : Vec<&str> = foo.split(" ").collect();
+                    let fields: Vec<&str> = foo.split(" ").collect();
                     let vx = fields[0].parse::<f32>().unwrap();
                     let vy = fields[1].parse::<f32>().unwrap();
                     let vz = fields[2].parse::<f32>().unwrap();
@@ -114,38 +118,36 @@ impl Mesh {
                     let nz = fields[5].parse::<f32>().unwrap();
                     vertices.push(Vertex {
                         coords: nalgebra::Point3::new(vx, vy, vz),
-                        normal: nalgebra::Vector3::new(nx, ny, nz)
+                        normal: nalgebra::Vector3::new(nx, ny, nz),
                     });
                 }
             }
         }
-        
-        
+
         // Read the faces
         for _i in 0..num_faces {
             match lines.next() {
                 None => break,
                 Some(line) => {
                     let foo = line.unwrap();
-                    let fields : Vec<&str> = foo.split(" ").collect();
+                    let fields: Vec<&str> = foo.split(" ").collect();
                     let index1 = fields[1].parse::<u32>().unwrap();
                     let index2 = fields[2].parse::<u32>().unwrap();
                     let index3 = fields[3].parse::<u32>().unwrap();
-                    
+
                     faces.push(Triangle {
                         v1: index1,
                         v2: index2,
                         v3: index3,
-                        material: material
+                        material: material,
                     });
                 }
             }
-        }        
+        }
 
         // Build the acceleration structure
         Ok(Self::new(vertices, faces))
     }
-
 
     ///
     /// Compute the bounding box
@@ -153,8 +155,6 @@ impl Mesh {
         BoundingBox::build(&self.vertices)
     }
 }
-
-
 
 ///
 /// Mesh-ray intersection
@@ -168,8 +168,11 @@ impl Intersectable for Mesh {
                 let v1 = &self.vertices[hit.v1 as usize];
                 let v2 = &self.vertices[hit.v2 as usize];
                 let v3 = &self.vertices[hit.v3 as usize];
-                let point = hit.alpha * v1.coords.coords + hit.beta * v2.coords.coords + hit.gamma * v3.coords.coords;
-                let normal = (hit.alpha * v1.normal + hit.beta * v2.normal + hit.gamma * v3.normal).normalize();
+                let point = hit.alpha * v1.coords.coords
+                    + hit.beta * v2.coords.coords
+                    + hit.gamma * v3.coords.coords;
+                let normal = (hit.alpha * v1.normal + hit.beta * v2.normal + hit.gamma * v3.normal)
+                    .normalize();
                 Some(Intersection {
                     point: nalgebra::Point3::new(point.x, point.y, point.z),
                     normal: normal,
@@ -180,7 +183,7 @@ impl Intersectable for Mesh {
                     gamma: f32::NAN,
                     v1: 0,
                     v2: 0,
-                    v3: 0
+                    v3: 0,
                 })
             }
         }

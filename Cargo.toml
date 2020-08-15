@@ -2,29 +2,28 @@
 name = "rspt"
 version = "0.1.0"
 authors = ["José Franco Campos <josefrancocampos@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 clap = "2"
-image = "0.20"
+image = "0.23"
+itertools = "0.9"
+nalgebra = { version = "0.21", features = ["serde-serialize"] }
 num-traits = "0.2"
-rand = "0.6"
+rand = "0.7"
 rayon = "1.0"
 serde = "1.0"
 serde_derive = "1.0"
-serde_json = "1.0"
+ron = "0.6"
 
-[dependencies.nalgebra]
-version = "0.16"
-features = ["serde-serialize"]
-
-# The release profile, used for `cargo build --release`.
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 16
-panic = 'unwind'
-incremental = false
-overflow-checks = false
+## The release profile, used for `cargo build --release`.
+#[profile.release]
+#opt-level = 3
+#debug = false
+#rpath = false
+#lto = true
+#debug-assertions = false
+#codegen-units = 16
+#panic = 'unwind'
+#incremental = false
+#overflow-checks = false

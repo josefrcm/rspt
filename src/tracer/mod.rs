@@ -1,20 +1,20 @@
 pub mod camera;
-pub use self::camera::*;
+pub use camera::*;
 
 pub mod color;
-pub use self::color::*;
+pub use color::*;
 
 pub mod halton;
-pub use self::halton::*;
+pub use halton::*;
 
-pub mod image;
-pub use self::image::*;
+pub mod image2d;
+pub use image2d::*;
 
 pub mod material;
-pub use self::material::*;
+pub use material::*;
 
 pub mod sampling;
-pub use self::sampling::*;
+pub use sampling::*;
 
 pub mod scene;
-pub use self::scene::*;
+pub use scene::*;

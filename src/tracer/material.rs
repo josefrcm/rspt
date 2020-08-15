@@ -1,10 +1,8 @@
-use std::f32;
 use nalgebra;
+use std::f32;
 
-use geometry;
-use tracer::*;
-
-
+use crate::geometry;
+use super::*;
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public data types
@@ -12,16 +10,9 @@ use tracer::*;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum Material {
-    Light {
-        emission: Color
-    },
-    Standard {
-        emission: Color,
-        diffuse: Color,
-    }    
+    Light { emission: Color },
+    Standard { emission: Color, diffuse: Color },
 }
-
-
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public functions
@@ -30,66 +21,64 @@ pub enum Material {
 impl Material {
     pub fn none() -> Self {
         Material::Light {
-            emission: Color::black()
+            emission: Color::black(),
         }
     }
 
-
-    pub fn spawn_secondary_ray(&self, intersection: &SceneIntersection) -> geometry::Ray {
+    pub fn spawn_secondary_ray(&self, intersection: &IntersectionPoint) -> geometry::Ray {
         match self {
-            Material::Light { emission } => {
-                geometry::Ray {
-                    origin: nalgebra::Point3::new(f32::NAN, f32::NAN, f32::NAN),
-                    direction: nalgebra::Vector3::new(f32::NAN, f32::NAN, f32::NAN),
-                }
+            Material::Light { .. } => geometry::Ray {
+                origin: nalgebra::Point3::new(f32::NAN, f32::NAN, f32::NAN),
+                direction: nalgebra::Vector3::new(f32::NAN, f32::NAN, f32::NAN),
             },
-            Material::Standard { emission, diffuse } => {
+            Material::Standard { .. } => {
                 sample_hemisphere(intersection.point, intersection.normal, intersection.ray)
             }
-        }      
+        }
     }
 
-
-    pub fn shade(&self, point: nalgebra::Point3<f32>, incident: nalgebra::Vector3<f32>, normal: nalgebra::Vector3<f32>, outgoing: nalgebra::Vector3<f32>, foobar: Color) -> Color {
+    pub fn shade(
+        &self,
+        point: &IntersectionPoint,
+        outgoing_ray: nalgebra::Vector3<f32>,
+        incoming_color: Color,
+    ) -> Color {
         match self {
-            Material::Light { emission } => {
-                *emission
-            },
+            Material::Light { emission } => *emission,
             Material::Standard { emission, diffuse } => {
-                (*emission) + (normal.dot(&outgoing) * (*diffuse) * foobar)
+                (*emission) + (point.normal.dot(&outgoing_ray) * (*diffuse) * incoming_color)
             }
         }
     }
 }
-
-
-
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Private functions
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
-fn sample_hemisphere(point: nalgebra::Point3<f32>, normal: nalgebra::Vector3<f32>, incident: geometry::Ray) -> geometry::Ray {
+fn sample_hemisphere(
+    point: nalgebra::Point3<f32>,
+    normal: nalgebra::Vector3<f32>,
+    incident: geometry::Ray,
+) -> geometry::Ray {
     let x = 2.0 * rand::random::<f32>() - 1.0;
     let y = 2.0 * rand::random::<f32>() - 1.0;
     let z = 2.0 * rand::random::<f32>() - 1.0;
-    let s = (x*x + y*y + z*z).sqrt();
+    let s = (x * x + y * y + z * z).sqrt();
 
-    let mut d = nalgebra::Vector3::new(x/s, y/s, z/s);
-    
+    let mut d = nalgebra::Vector3::new(x / s, y / s, z / s);
+
     if d.dot(&normal) < 0.0 {
         d.x = -d.x;
         d.y = -d.y;
         d.z = -d.z;
     }
-    
+
     geometry::Ray {
         origin: point + 1.0e-3 * d,
-        direction: d
+        direction: d,
     }
 }
-
-
 
 /*fn sample_hemisphere(point: nalgebra::Point3<f32>, normal: nalgebra::Vector3<f32>, incident: geometry::Ray) -> geometry::Ray {
     // Create the local frame
@@ -102,7 +91,7 @@ fn sample_hemisphere(point: nalgebra::Point3<f32>, normal: nalgebra::Vector3<f32
     let u2 = rand::random::<f32>();
     let r = u1.sqrt();
     let theta = 2.0 * 3.141592654 * u2;
- 
+
     let x = r * theta.cos();
     let y = r * theta.sin();
     let z = (f32::max(0.0, 1.0 - u1)).sqrt();
