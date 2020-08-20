@@ -1,16 +1,12 @@
+use ron;
 use std;
 use std::collections::HashMap;
-use std::f32;
 use std::fs::File;
 use std::ops::Deref;
 use std::path::Path;
 
-use nalgebra;
-use ron;
-
-use crate::geometry;
-use crate::geometry::util::Intersectable;
 use super::*;
+use crate::geometry;
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public data types
@@ -33,23 +29,8 @@ pub struct SceneDef {
 /// World geometry
 pub struct Scene {
     pub materials: Vec<Material>,
-    pub geometry: geometry::BVH<geometry::Mesh>,
-}
-
-///
-/// Point in space where the intersection took place
-pub struct IntersectionPoint {
-    pub ray: geometry::Ray,
-    pub point: nalgebra::Point3<f32>,
-    pub normal: nalgebra::Vector3<f32>,
-    pub distance: f32,
-}
-
-///
-/// Intersection against the world
-pub struct SceneIntersection<'a> {
-    pub point: IntersectionPoint,
-    pub material: &'a Material,
+    //pub geometry: geometry::BVH,
+    pub geometry: Vec<geometry::Mesh>,
 }
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -66,7 +47,6 @@ impl Scene {
         // Load each model
         let base_dir = filename.parent().unwrap();
         let mut materials = Vec::new();
-        materials.push(Material::none());
 
         let mut meshes = Vec::new();
         for m in &json.meshes {
@@ -79,54 +59,29 @@ impl Scene {
         }
 
         // Build the acceleration structure
-        let mut bundles = Vec::new();
-        for m in meshes {
-            let b = m.bounds();
-            bundles.push((m, b));
-        }
-        let tree = geometry::BVH::build(&bundles);
+        //let tree = geometry::BVH::build_world(meshes);
 
         // Done
         Ok(Scene {
             materials: materials,
-            geometry: tree,
+            geometry: meshes,
         })
     }
 
     ///
     /// Intersect a ray against the world
-    pub fn intersect(&self, ray: geometry::Ray) -> SceneIntersection {
-        if ray.direction.x.is_nan() || ray.direction.y.is_nan() || ray.direction.z.is_nan() {
-            SceneIntersection {
-                point: IntersectionPoint {
-                    ray: ray,
-                    point: nalgebra::Point3::new(f32::NAN, f32::NAN, f32::NAN),
-                    normal: nalgebra::Vector3::new(f32::NAN, f32::NAN, f32::NAN),
-                    distance: f32::INFINITY,
-                },
-                material: &self.materials[0],
-            }
-        } else {
-            match self.geometry.intersect(ray) {
-                None => SceneIntersection {
-                    point: IntersectionPoint {
-                        ray: ray,
-                        point: nalgebra::Point3::new(f32::NAN, f32::NAN, f32::NAN),
-                        normal: nalgebra::Vector3::new(f32::NAN, f32::NAN, f32::NAN),
-                        distance: f32::INFINITY,
-                    },
-                    material: &self.materials[0],
-                },
-                Some(hit) => SceneIntersection {
-                    point: IntersectionPoint {
-                        ray: ray,
-                        point: hit.point,
-                        normal: hit.normal,
-                        distance: hit.distance,
-                    },
-                    material: &self.materials[hit.material as usize],
-                },
+    pub fn intersect(&self, ray: geometry::Ray) -> geometry::MeshIntersection {
+        let mut result = geometry::MeshIntersection::empty();
+
+        if ray.direction.x.is_finite() && ray.direction.y.is_finite() && ray.direction.z.is_finite() {
+            for m in &self.geometry {
+                let hit = m.intersect(ray);
+                if hit.distance < result.distance {
+                    result = hit;
+                }
             }
         }
+
+        return result;
     }
 }

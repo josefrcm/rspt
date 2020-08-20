@@ -1,18 +1,14 @@
-use rayon::prelude::*;
+use ndarray::Zip;
 
-use crate::geometry;
 use super::*;
+use crate::geometry;
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public functions
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
-pub fn sample(scene: &Scene, camera: &Camera, max_bounces: usize) -> Vec<Color> {
-    camera
-        .make_rays()
-        .par_iter()
-        .map(|r| trace_ray(scene, *r, max_bounces))
-        .collect()
+pub fn sample(scene: &Scene, camera: &Camera, max_bounces: usize) -> Image2D {
+    Zip::from(&camera.make_rays()).par_apply_collect(|r| trace_ray(scene, *r, max_bounces))
 
     //let rays = camera.make_rays();
     //sample_scene(scene, &rays, max_bounces)
@@ -35,12 +31,16 @@ pub fn sample(scene: &Scene, camera: &Camera, max_bounces: usize) -> Vec<Color> 
 
 fn trace_ray(scene: &Scene, ray: geometry::Ray, max_bounces: usize) -> Color {
     if max_bounces == 0 {
-        Color::black()
+        color::black()
     } else {
         let hit = scene.intersect(ray);
-        let outgoing_ray = hit.material.spawn_secondary_ray(&hit.point);
-        let incoming_color = trace_ray(scene, outgoing_ray, max_bounces - 1);
-        hit.material
-            .shade(&hit.point, outgoing_ray.direction, incoming_color)
+        if hit.distance.is_finite() {
+            let material = &scene.materials[hit.material as usize];
+            let outgoing_ray = material.spawn_secondary_ray(&hit);
+            let incoming_color = trace_ray(scene, outgoing_ray, max_bounces - 1);
+            material.shade(&hit, outgoing_ray.direction, incoming_color)
+        } else {
+            color::black()
+        }
     }
 }

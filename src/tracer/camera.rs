@@ -61,24 +61,19 @@ impl Camera {
 
     ///
     /// Trace rays from the camera
-    /// TODO: add
-    pub fn make_rays(&self) -> Vec<geometry::Ray> {
-        let mut rays: Vec<geometry::Ray> = Vec::new();
+    pub fn make_rays(&self) -> ndarray::Array2<geometry::Ray> {
         let xbias = rand::random::<f32>() - (self.width as f32) / 2.0;
         let ybias = rand::random::<f32>() - (self.height as f32) / 2.0;
         let foobar = 1.0 / f32::min(self.width as f32, self.height as f32);
 
-        for y in 0..self.height {
-            for x in 0..self.width {
-                let xr = foobar * (x as f32 + xbias);
-                let yr = -foobar * (y as f32 + ybias);
-                let direction = nalgebra::Vector3::new(xr, self.focal, yr).normalize();
-                rays.push(geometry::Ray {
-                    origin: self.position,
-                    direction: direction,
-                });
+        ndarray::Array2::from_shape_fn([self.height, self.width], |(y, x)| {
+            let xr = foobar * (x as f32 + xbias);
+            let yr = -foobar * (y as f32 + ybias);
+            let direction = nalgebra::Vector3::new(xr, self.focal, yr).normalize();
+            geometry::Ray {
+                origin: self.position,
+                direction: direction,
             }
-        }
-        rays
+        })
     }
 }

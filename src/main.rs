@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 #[macro_use] extern crate serde;
 
 mod geometry;
@@ -127,6 +129,11 @@ pub fn pretty_time(t: std::time::Duration) -> String {
 ///
 ///
 fn main() {
+    println!("sizeof(TriangleBundle): {}", std::mem::size_of::<geometry::TriangleBundle>());
+    println!("sizeof(AABB): {}", std::mem::size_of::<geometry::AABB>());
+    println!("sizeof(Node): {}", std::mem::size_of::<geometry::Node>());
+    println!("sizeof(BVH): {}", std::mem::size_of::<geometry::BVH>());
+
     // Load the input data
     let load_start = std::time::Instant::now();
     let options = parse_options();
@@ -139,19 +146,20 @@ fn main() {
 
     // Render the scene
     let render_start = std::time::Instant::now();
-    let mut fb = tracer::Image::new(options.width, options.height);
+    let mut fb = tracer::image2d::new(options.width, options.height);
     for i in 0..options.num_samples {
         println!("Rendering sample {}/{}", i + 1, options.num_samples);
         let sampling = tracer::sample(&scene, &mut camera, options.max_bounces);
-        fb.accum(&sampling);
+        tracer::image2d::accum(&mut fb, &sampling);
     }
-    fb.scale(options.num_samples);
+    tracer::image2d::scale(&mut fb, options.num_samples);
     let render_time = render_start.elapsed();
 
     // Write the resulting image
     let save_start = std::time::Instant::now();
     println!("Writing result");
-    fb.save_png(&options.image_file).unwrap();
+    tracer::image2d::save_png(&fb, &options.image_file).unwrap();
+    //tracer::image2d::save_hdr(&fb, &options.image_file).unwrap();
     let save_time = save_start.elapsed();
 
     // Print the timing results

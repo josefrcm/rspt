@@ -7,20 +7,15 @@ use nalgebra::*;
 
 pub const BUNDLE_SIZE: usize = 8;
 pub const EPSILON: f32 = 0.0000001;
+#[allow(non_camel_case_types)]
 type u32xN = [u32; BUNDLE_SIZE];
+#[allow(non_camel_case_types)]
 type f32xN = VectorN<f32, U8>;
 
 ///
 /// Triangle bundle
 #[derive(Clone, Copy)]
 pub struct TriangleBundle {
-    // This should be laid out like this
-    // Pack every triangle in sequence
-    v1: u32xN,
-    v2: u32xN,
-    v3: u32xN,
-    material: u32xN,
-
     plane_eq_x: f32xN,
     plane_eq_y: f32xN,
     plane_eq_z: f32xN,
@@ -35,6 +30,30 @@ pub struct TriangleBundle {
     gamma_eq_y: f32xN,
     gamma_eq_z: f32xN,
     gamma_eq_w: f32xN,
+
+    faces: [Triangle; BUNDLE_SIZE],
+}
+
+///
+/// Result of a bundle-ray intersection
+pub struct BundleIntersection {
+    pub distance: f32,
+    pub alpha: f32,
+    pub beta: f32,
+    pub gamma: f32,
+    pub face: Triangle,
+}
+
+impl BundleIntersection {
+    pub fn empty() -> Self {
+        Self {
+            distance: f32::INFINITY,
+            alpha: f32::NAN,
+            beta: f32::NAN,
+            gamma: f32::NAN,
+            face: Triangle::invalid(),
+        }
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -55,10 +74,6 @@ impl TriangleBundle {
 
         // Initialize the bundle to all zeros
         let mut bundle = TriangleBundle {
-            v1: [0; BUNDLE_SIZE],
-            v2: [0; BUNDLE_SIZE],
-            v3: [0; BUNDLE_SIZE],
-            material: [0; BUNDLE_SIZE],
             plane_eq_x: zero(),
             plane_eq_y: zero(),
             plane_eq_z: zero(),
@@ -71,23 +86,16 @@ impl TriangleBundle {
             gamma_eq_y: zero(),
             gamma_eq_z: zero(),
             gamma_eq_w: zero(),
+            faces: [Triangle::invalid(); BUNDLE_SIZE],
         };
 
         // Compute the triangle equations
         for (i, triangle) in faces.iter().enumerate() {
-            // Check that the triangle doesn't use material zero
-            if triangle.material == 0 {
-                panic!("Triangles shouldn't use material zero");
-            }
-
             // The triangle itself
+            bundle.faces[i] = *triangle;
             let index1 = triangle.v1;
             let index2 = triangle.v2;
             let index3 = triangle.v3;
-            bundle.v1[i] = index1;
-            bundle.v2[i] = index2;
-            bundle.v3[i] = index3;
-            bundle.material[i] = triangle.material;
 
             // Vertex coordinates
             let vertex1 = vertices[index1 as usize].coords.xyz();
@@ -139,10 +147,10 @@ impl TriangleBundle {
 /// Ray-bundle intersection
 /// [Baldwin-Weber]
 /// http://jcgt.org/published/0005/03/03/
-impl Intersectable for TriangleBundle {
+impl TriangleBundle {
     ///
     /// Ray-Bundle intersection
-    fn intersect(&self, ray: Ray) -> Option<Intersection> {
+    pub fn intersect(&self, ray: Ray) -> BundleIntersection {
         // Compute the intersection of the ray against all triangles in the bundle
         let t1: f32xN = (self.plane_eq_x * ray.origin.x)
             + (self.plane_eq_y * ray.origin.y)
@@ -170,10 +178,10 @@ impl Intersectable for TriangleBundle {
         let alphas: f32xN = f32xN::repeat(1.0) - betas - gammas;
 
         // Find the intersection of the ray against the bundle
-        let mut nearest_distance = std::f32::INFINITY;
+        let mut nearest_distance = f32::INFINITY;
         let mut nearest_index = 0;
         for i in 0..BUNDLE_SIZE {
-            if (self.material[i] > 0)
+            if (self.faces[i].material != u32::MAX)
                 && (distances[i] > EPSILON)
                 && (alphas[i] > 0.0)
                 && (betas[i] > 0.0)
@@ -187,20 +195,15 @@ impl Intersectable for TriangleBundle {
 
         // If a triangle was hit, compute the intersection parameters: coordinates, normal, material, etc.
         if nearest_distance.is_infinite() {
-            None
+            BundleIntersection::empty()
         } else {
-            Some(Intersection {
+            BundleIntersection {
                 distance: nearest_distance,
                 alpha: alphas[nearest_index],
                 beta: betas[nearest_index],
                 gamma: gammas[nearest_index],
-                v1: self.v1[nearest_index],
-                v2: self.v2[nearest_index],
-                v3: self.v3[nearest_index],
-                material: self.material[nearest_index],
-                point: nalgebra::geometry::Point::origin(),
-                normal: zero(),
-            })
+                face: self.faces[nearest_index],
+            }
         }
     }
 }

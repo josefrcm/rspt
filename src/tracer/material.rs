@@ -21,32 +21,32 @@ pub enum Material {
 impl Material {
     pub fn none() -> Self {
         Material::Light {
-            emission: Color::black(),
+            emission: color::black(),
         }
     }
 
-    pub fn spawn_secondary_ray(&self, intersection: &IntersectionPoint) -> geometry::Ray {
+    pub fn spawn_secondary_ray(&self, intersection: &geometry::MeshIntersection) -> geometry::Ray {
         match self {
             Material::Light { .. } => geometry::Ray {
                 origin: nalgebra::Point3::new(f32::NAN, f32::NAN, f32::NAN),
                 direction: nalgebra::Vector3::new(f32::NAN, f32::NAN, f32::NAN),
             },
             Material::Standard { .. } => {
-                sample_hemisphere(intersection.point, intersection.normal, intersection.ray)
+                sample_hemisphere(intersection.point, intersection.normal)
             }
         }
     }
 
     pub fn shade(
         &self,
-        point: &IntersectionPoint,
+        point: &geometry::MeshIntersection,
         outgoing_ray: nalgebra::Vector3<f32>,
         incoming_color: Color,
     ) -> Color {
         match self {
             Material::Light { emission } => *emission,
             Material::Standard { emission, diffuse } => {
-                (*emission) + (point.normal.dot(&outgoing_ray) * (*diffuse) * incoming_color)
+                emission + (point.normal.dot(&outgoing_ray) * diffuse.component_mul(&incoming_color))
             }
         }
     }
@@ -58,8 +58,7 @@ impl Material {
 
 fn sample_hemisphere(
     point: nalgebra::Point3<f32>,
-    normal: nalgebra::Vector3<f32>,
-    incident: geometry::Ray,
+    normal: nalgebra::Vector3<f32>
 ) -> geometry::Ray {
     let x = 2.0 * rand::random::<f32>() - 1.0;
     let y = 2.0 * rand::random::<f32>() - 1.0;

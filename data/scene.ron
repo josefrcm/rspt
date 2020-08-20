@@ -1,35 +1,15 @@
 SceneDef(
     materials: {
         "white-light": Light(
-            emission: Color(
-                r: 1.0,
-                g: 1.0,
-                b: 1.0
-            )
+            emission: [1.0, 1.0, 1.0]
         ),
         "white-diffuse": Standard(
-            diffuse: Color(
-                r: 0.8,
-                g: 0.8,
-                b: 0.8
-            ),
-            emission: Color(
-                r: 0.0,
-                g: 0.0,
-                b: 0.0
-            )
+            diffuse: [0.8, 0.8, 0.8],
+            emission: [0.0, 0.0, 0.0]
         ),
         "red-diffuse": Standard(
-            diffuse: Color(
-                r: 1.0,
-                g: 0.0,
-                b: 0.0
-            ),
-            emission: Color(
-                r: 0.0,
-                g: 0.0,
-                b: 0.0
-            )
+            diffuse: [1.0, 0.0, 0.0],
+            emission: [0.0, 0.0, 0.0]
         )
     },
     meshes: [

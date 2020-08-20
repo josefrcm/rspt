@@ -8,8 +8,8 @@ use super::*;
 
 ///
 /// Axis aligned bounding box
-#[derive(Clone, Copy)]
-pub struct BoundingBox {
+#[derive(Clone, Copy, Debug)]
+pub struct AABB {
     pub lower: nalgebra::Point3<f32>,
     pub upper: nalgebra::Point3<f32>,
 }
@@ -20,11 +20,11 @@ pub struct BoundingBox {
 
 ///
 /// Compute the bounding box
-impl BoundingBox {
+impl AABB {
     ///
     /// Create an empty bounding box, that doesn't use any space
     pub fn empty() -> Self {
-        BoundingBox {
+        AABB {
             lower: nalgebra::Point3::new(f32::NAN, f32::NAN, f32::NAN),
             upper: nalgebra::Point3::new(f32::NAN, f32::NAN, f32::NAN),
         }
@@ -32,7 +32,7 @@ impl BoundingBox {
 
     ///
     /// Extract the bounding box of a group of vertices
-    pub fn build(vertices: &[Vertex]) -> Self {
+    pub fn from_vertices(vertices: &[Vertex]) -> Self {
         // Initialization
         let mut lower = nalgebra::Point3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
         let mut upper =
@@ -50,7 +50,7 @@ impl BoundingBox {
         }
 
         // Done
-        BoundingBox {
+        AABB {
             lower: lower,
             upper: upper,
         }
@@ -58,7 +58,7 @@ impl BoundingBox {
 
     ///
     /// Extract the bounding box of a group of faces and its corresponding vertices
-    pub fn build2(vertices: &[Vertex], faces: &[Triangle]) -> Self {
+    pub fn from_faces(vertices: &[Vertex], faces: &[Triangle]) -> Self {
         // Compute the bounds of the geometry
         let mut lower = nalgebra::Point3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
         let mut upper =
@@ -94,7 +94,7 @@ impl BoundingBox {
         }
 
         // Done
-        BoundingBox {
+        AABB {
             lower: lower,
             upper: upper,
         }
@@ -131,7 +131,7 @@ impl BoundingBox {
 
 ///
 /// Compute the union of two bounding boxes
-pub fn union(boxes: &[BoundingBox]) -> BoundingBox {
+pub fn union(boxes: &[AABB]) -> AABB {
     // initialization
     let mut lower = nalgebra::Point3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY);
     let mut upper = nalgebra::Point3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY);
@@ -148,7 +148,7 @@ pub fn union(boxes: &[BoundingBox]) -> BoundingBox {
     }
 
     // Done
-    BoundingBox {
+    AABB {
         lower: lower,
         upper: upper,
     }

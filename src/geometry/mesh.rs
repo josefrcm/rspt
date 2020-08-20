@@ -13,7 +13,7 @@ use super::*;
 
 ///
 /// Vertex
-#[derive(Clone)]
+#[derive(Clone, Copy, Debug)]
 pub struct Vertex {
     pub coords: nalgebra::Point3<f32>,
     pub normal: nalgebra::Vector3<f32>,
@@ -21,7 +21,7 @@ pub struct Vertex {
 
 ///
 /// Triangle
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Triangle {
     pub v1: u32,
     pub v2: u32,
@@ -34,20 +34,41 @@ pub struct Triangle {
 #[derive(Clone)]
 pub struct Mesh {
     pub vertices: Vec<Vertex>,
-    pub faces: BVH<TriangleBundle>,
+    pub faces: BVH,
 }
+
+///
+/// Result of a mesh-ray intersection
+pub struct MeshIntersection {
+    pub distance: f32,
+    pub material: u32,
+    pub point: nalgebra::Point3<f32>,
+    pub normal: nalgebra::Vector3<f32>,
+}
+
+impl MeshIntersection {
+    pub fn empty() -> Self {
+        Self {
+            distance: f32::INFINITY,
+            material: u32::MAX,
+            point: nalgebra::geometry::Point::origin(),
+            normal: nalgebra::zero(),
+        }
+    }
+}
+
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 // Public functions
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 impl Triangle {
-    pub fn zero() -> Self {
+    pub fn invalid() -> Self {
         Self {
-            v1: 0,
-            v2: 0,
-            v3: 0,
-            material: 0,
+            v1: u32::MAX,
+            v2: u32::MAX,
+            v3: u32::MAX,
+            material: u32::MAX,
         }
     }
 }
@@ -60,10 +81,10 @@ impl Mesh {
         let mut bundles = Vec::new();
         for c in faces.chunks(BUNDLE_SIZE) {
             let foo = TriangleBundle::new(&vertices, &c.to_vec());
-            let bar = BoundingBox::build2(&vertices, &c.to_vec());
+            let bar = AABB::from_faces(&vertices, &c.to_vec());
             bundles.push((foo, bar));
         }
-        let tree = BVH::build(&bundles);
+        let tree = BVH::build_mesh(&bundles);
 
         // Done
         Mesh {
@@ -151,41 +172,35 @@ impl Mesh {
 
     ///
     /// Compute the bounding box
-    pub fn bounds(&self) -> BoundingBox {
-        BoundingBox::build(&self.vertices)
+    pub fn bounds(&self) -> AABB {
+        AABB::from_vertices(&self.vertices)
     }
 }
 
 ///
 /// Mesh-ray intersection
-impl Intersectable for Mesh {
+impl Mesh {
     ///
     /// Compute the mesh-ray intersection
-    fn intersect(&self, ray: Ray) -> Option<Intersection> {
-        match self.faces.intersect(ray) {
-            None => None,
-            Some(hit) => {
-                let v1 = &self.vertices[hit.v1 as usize];
-                let v2 = &self.vertices[hit.v2 as usize];
-                let v3 = &self.vertices[hit.v3 as usize];
-                let point = hit.alpha * v1.coords.coords
-                    + hit.beta * v2.coords.coords
-                    + hit.gamma * v3.coords.coords;
-                let normal = (hit.alpha * v1.normal + hit.beta * v2.normal + hit.gamma * v3.normal)
-                    .normalize();
-                Some(Intersection {
-                    point: nalgebra::Point3::new(point.x, point.y, point.z),
-                    normal: normal,
-                    distance: hit.distance,
-                    material: hit.material,
-                    alpha: f32::NAN,
-                    beta: f32::NAN,
-                    gamma: f32::NAN,
-                    v1: 0,
-                    v2: 0,
-                    v3: 0,
-                })
+    pub fn intersect(&self, ray: Ray) -> MeshIntersection {
+        let hit = self.faces.intersect(ray);
+        if hit.distance.is_finite() {
+            let v1 = &self.vertices[hit.face.v1 as usize];
+            let v2 = &self.vertices[hit.face.v2 as usize];
+            let v3 = &self.vertices[hit.face.v3 as usize];
+            let point = hit.alpha * v1.coords.coords
+                + hit.beta * v2.coords.coords
+                + hit.gamma * v3.coords.coords;
+            let normal =
+                (hit.alpha * v1.normal + hit.beta * v2.normal + hit.gamma * v3.normal).normalize();
+                MeshIntersection {
+                point: nalgebra::Point3::new(point.x, point.y, point.z),
+                normal: normal,
+                distance: hit.distance,
+                material: hit.face.material,
             }
+        } else {
+            MeshIntersection::empty()
         }
     }
 }
